@@ -1,0 +1,86 @@
+*{
+    font-family: 'Arial Normal', 'Arial';
+    font-style: normal;
+    font-size: 14px;
+}
+html, body {
+    height: 100%;
+}
+.ivu-layout {
+    height: 100%;
+    background: #fff;
+}
+.ivu-layout-header{
+    background: #444444;
+}
+.ivu-layout-content{
+    overflow-y: auto;
+    height: 100%;
+}
+.ivu-menu-dark{
+    background: #444444;
+}
+.ivu-menu-item{
+    font-family: 'Arial Normal', 'Arial';
+    font-weight: bold;
+    font-style: normal;
+    font-size: 14px;
+}
+.ivu-table-wrapper{
+    border:none;
+}
+.ivu-table td, .ivu-table th{
+    border:none;
+}
+.ivu-table:after, .ivu-table:before{
+    background: none;
+}
+.main-content{
+    padding: 20px;
+}
+.info-line{
+    margin-bottom: 20px;
+}
+.info-line dt{
+    float:left;
+    width: 80px;
+}
+.info-line dt, .info-line dd{
+    display:block;
+    font-size: 14px;
+    color: #333333;
+    line-height: 26px;
+    text-rendering: optimizeLegibility;
+    -webkit-font-feature-settings: "kern";
+    -moz-font-feature-settings: "kern";
+    -moz-font-feature-settings: "kern=1";
+    font-kerning: normal;
+    white-space: nowrap;
+}
+.info-line dt:after{
+    content: '：'
+}
+.search-bar{
+    padding: 10px 20px;
+    background: #eee;
+}
+.search-bar .ivu-form-item{
+    margin: 12px 0;
+}
+.search-opened .ivu-form-item-label {
+    color: #fff;
+}
+.opr a{
+    margin: 0 20px 0 0;
+}
+/* baidu map begin */ 
+.BMap_cpyCtrl{
+    display: none !important;
+}
+.anchorBL{
+    display: none !important;
+}
+/* baidu map end */ 
+.verify-btn {
+    display: none;
+}
