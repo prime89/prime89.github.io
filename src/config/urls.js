@@ -1,19 +1,23 @@
 export default {
-    LOGIN: '/api/login',
-    LOGOUT: '/api/logout',
-    RESET_PASSWD: '/api/resetPasswd',
-    GET_USERS: '/api/users',
+    LOGIN: '/login',
+    LOGOUT: '/logout',
+    RESET_PASSWORD: '/resetPasswd',
+    USERLIST: '/setuser/user',
+    RESET_USER_PASSWD: '/setuser/user2',
+    MODIFY_USER: '/users/ss',
+    DELETE_USER: '/user/delete',
 
     //devs
-    DEVLIST: '/api/devs',
-    DEV_BIND: '/api/devs/bind',
-    DEV_UNBIND: '/api/devs/unbind',
+    DEVLIST: '/device/deviceList',
+    DEV_BIND: '/device/bind',
+    DEV_UNBIND: '/devs/unbind',
 
     //elevators
-    ELEVATORLIST: '/api/elevators',
-    ELEVATORHISTORY: '/api/history',
+    ELEVATORLIST: '/elevators',
+    ELEVATORHISTORY: '/history',
 
     //incidents
-    INCIDENTLIST: '/api/incidents',
+    INCIDENTLIST: '/incidents',
+    CLOSE_INCIDENT: '/incidents',
 
 };

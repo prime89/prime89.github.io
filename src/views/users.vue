@@ -43,13 +43,13 @@
                 <FormItem label="用户名" prop="username">
                     <Input size="large" v-model="formItem.username" placeholder="请输入用户名" style="width: 400px" />
                 </FormItem>
-                <FormItem label="联系方式" prop="tel">
-                    <Input size="large" v-model="formItem.username" placeholder="联系方式" style="width: 400px" />
+                <FormItem label="联系方式" prop="telephone">
+                    <Input size="large" v-model="formItem.telephone" placeholder="联系方式" style="width: 400px" />
                 </FormItem>
             </Form>
 
             <div slot="footer">
-                <Button size="large" @click="cancel('modifyModal')">取消</Button>
+                <Button type="text" size="large" @click="cancel('modifyModal')">取消</Button>
                 <Button type="primary" size="large" @click="modifyUser()">确定</Button>
             </div>
         </Modal>
@@ -72,13 +72,13 @@
                 },
                 formItem: {
                     username: '',
-                    tel: '',
+                    telephone: '',
                 },
                 ruleValidate: {
                     username: [
                         { required: true, message: '请输入用户名', trigger: 'blur' }
                     ],
-                    tel: [
+                    telephone: [
                         { required: true, message: '请输入联系方式', trigger: 'blur' }
                     ],
                 },
@@ -143,7 +143,7 @@
                 this.getUsers();
             },
             getUsers () {
-                this.$http.get(this.$url.GET_USERS, {}).then(((response) => {
+                this.$http.get(this.$url.USERLIST, {}).then(((response) => {
                     this.data = response.data.data || [];
                     this.total = response.data.total || 0;
                 }).bind(this));
@@ -158,20 +158,22 @@
                 this.deleteModal = true;
             },
             resetPasswd () {
-                this.$http.post(this.$url.RESET_USER_PASSWD).then((() => {
-                    this.$Message.success('修改成功');
+                this.$http.post(this.$url.RESET_USER_PASSWD).then(((data) => {
+                    this.$Message.success('重置密码成功');
                 }).bind(this));
             },
             deleteUser () {
                 this.$http.post(this.$url.DELETE_USER).then((() => {
                     this.$Message.success('删除成功');
+                    this.getUsers();
                 }).bind(this));
             },
             modifyUser () {
                 this.$refs['formItem'].validate((valid) => {
-                    if (valid) {console.log('22');
+                    if (valid) {
                         this.$http.post(this.$url.MODIFY_USER).then((() => {
                             this.modifyModal = false;
+                            this.getUsers();
                             this.$Message.success('修改成功');
                         }).bind(this));
                     }

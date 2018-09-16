@@ -63,10 +63,15 @@
                 //TODO
                 this.$refs[name].validate((valid) => {
                     if (valid) {
-                        this.$store.dispatch('resetPasswd', {password: this.formItem.password}).then(() => {
-                            this.$router.push({
-                                path: '/overview',
-                            });
+                        this.$store.dispatch('resetPasswd', {password: this.formItem.password}).then((data) => {
+                            if (data.code === 0) {
+                                this.$router.push({
+                                    path: '/overview',
+                                });
+                            } else {
+                                this.$Message.error('修改失败，请稍后尝试');
+                            }
+                            
                         }, () => {
                             this.$Message.error('修改失败，请稍后尝试');
                         });

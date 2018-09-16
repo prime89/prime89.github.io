@@ -80,7 +80,30 @@ html, body {
 .anchorBL{
     display: none !important;
 }
+.BMap_noprint{
+    display: none !important;
+}
 /* baidu map end */ 
 .verify-btn {
     display: none;
+}
+.ivu-modal-content{
+    border-radius: unset;
+}
+.ivu-modal-header{
+    border-bottom: none;
+    padding: 20px 0;
+}
+.ivu-modal-header-inner, .ivu-modal-header p{
+    height: inherit;
+    line-height: 30px;
+    font-size: 20px;
+    border-left: 4px solid rgba(51, 153, 255, 1);
+    padding: 0 20px;
+}
+.ivu-modal-footer{
+    background: rgba(245, 246, 247, 1);
+}
+.ivu-page{
+    margin-top: 20px; 
 }

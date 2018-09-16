@@ -1,3 +1,6 @@
+import axios from '../config/http';
+import urls from '@/config/urls';
+
 let loginUser = localStorage.getItem('loginUser');
 try {
     loginUser = JSON.parse(loginUser) || {};
@@ -5,12 +8,13 @@ try {
     loginUser = {};
 }
 
-//
 
 const state = {
     user: loginUser,
+    role: loginUser.role || '',
     passwdResetted: !!loginUser.passwdResetted,
     elevators: [],
+    isFullScreen: false,//是否全屏
 };
 
 const getters = {
@@ -21,19 +25,29 @@ const mutations = {
     setUser (state, user) {
         state.user = user;
         state.passwdResetted = user.passwdResetted;
+        state.role = user.role;
     },
     resetPasswd (state, flag) {
         (state.user || []).passwdResetted = flag;
         state.passwdResetted = flag;
         localStorage.setItem('loginUser', JSON.stringify(state.user));
+    },
+    setScreenSize (state, flag) {
+        state.isFullScreen = flag;
+    },
+    fullScreen (state) {
+        state.isFullScreen = true;        
+    },
+    shrink (state) {
+        state.isFullScreen = false;
     }
 };
 
 const actions = {
-    resetPasswd ({commit}, {}) {
-        return new Promise((resolve, reject) => {
+    resetPasswd ({commit, state}, {}) {
+        return axios.post(urls.RESET_PASSWORD, {}).then((response) => {
             commit('resetPasswd', true);
-            resolve({error: 0, message: 'ok'});
+            return response.data;
         });
     },
     initWebsocket ({commit, state}, {}) {

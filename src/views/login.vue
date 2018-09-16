@@ -1,23 +1,34 @@
 <template>
 <div class="login-frame"  :style="panelStyle">
     <div class="login-panel">
-            <Form :model="formItem" :label-width="80">
+            <Form :model="formItem" :label-width="80" ref="loginForm" :rules="ruleValidation">
                 <div class="login-title"><span>电梯动态监测系统</span></div>
-                <FormItem>
-                    <Input size="large" v-model="formItem.username" prefix="logo-usd" placeholder="用户名" style="width: 400px" />
+                <FormItem prop="username">
+                    <Input size="large" v-model="formItem.username" prefix="ios-person" placeholder="用户名" style="width: 400px" />
                 </FormItem>
-                <FormItem>
-                    <Input size="large" v-model="formItem.password" prefix="logo-usd" placeholder="密码" style="width: 400px" />
+                <FormItem prop="password">
+                    <Input type="password" size="large" v-model="formItem.password" prefix="ios-lock" placeholder="密码" style="width: 400px" />
                 </FormItem>
-
+                <FormItem prop="code">
+                    <Input size="large" v-model="formItem.code" prefix="ios-keypad" placeholder="验证码" style="width: 400px" >
+                        
+                    </Input>
+                    <img class="code" src="../images/logo.png" alt="">
+                </FormItem>
                 
                 <FormItem>
                     <Checkbox v-model="rememberMe" style="color:#fff">记住密码</Checkbox>
                 </FormItem>
+
                 <FormItem>
-                    <Verify @success="validateOk()" @error="error" type="puzzle" :barSize="barSize"
-                    :imgSize="imgSize" :imgUrl="imgUrl" :imgName="imgName"></Verify>
+                    <RadioGroup v-model="role" style="color:#fff">
+                        <Radio label="超级管理员"></Radio>
+                        <Radio label="管理员"></Radio>
+                        <Radio label="质监局"></Radio>
+                        <Radio label="监控中心"></Radio>
+                    </RadioGroup>
                 </FormItem>
+                
                 <FormItem>
                      <Button @click="login" type="info" style="width: 400px;">登陆</Button>
                 </FormItem>
@@ -31,9 +42,28 @@
     export default {
         data () {
             return {
+                role: '超级管理员',
                 formItem: { 
                     username: '',
                     password: '',
+                    code: '',
+                },
+                ruleValidation: {
+                    username: [{
+                        required: true,
+                        message: '请输入用户名',
+                        trigger: 'blur' 
+                    }],
+                    password: [{
+                        required: true,
+                        message: '请输入密码',
+                        trigger: 'blur' 
+                    }],
+                    code: [{
+                        required: true,
+                        message: '请输入验证码',
+                        trigger: 'blur' 
+                    }]
                 },
                 imgSize: {
                     width: '398px',
@@ -46,47 +76,45 @@
                 imgUrl: 'dist/images/validates/',
                 imgName: ['1.jpg', '2.png'],
                 rememberMe: false,
-                validation: false,
+                validation: true,
                 passwdChanged: false,
             };
         },
         methods: {
-            validateOk () {
-                this.validation = true;
-            },
             login () {
-                if (!this.validation) {
-                    console.log('validation error');
-                    return 
-                }
-                this.$store.commit('setUser', {
-                    username: this.formItem.username,
-                    passwdResetted: false,
+                this.$refs.loginForm.validate(valid => {
+                    if (!valid) {
+                        return;
+                    }
+
+                    this.loginPost();
                 });
-                localStorage.setItem('loginUser', JSON.stringify({username: this.formItem.username}));
-                
-                this.reset();
-                if (!this.passwdChanged) {
+            },
+            loginPost () {
+                this.$http.post(this.$url.LOGIN, this.formItem).then(((response) => {
+                    console.log(response.data);
+                    //set user role
+                    const userinfo = {
+                        username: response.data.userName,
+                        role: this.role || response.data.sys_role_name,
+                        passwdResetted: !!response.data.pdstatus,
+                    };
+                    this.$store.commit('setUser', userinfo);
+                    localStorage.setItem('loginUser', JSON.stringify(userinfo));
+                    
+                    this.reset();
+                    if (!userinfo.passwdResetted) {
+                        return this.$router.push({
+                            path: '/resetPasswd'
+                        });
+                    }
                     return this.$router.push({
-                        path: '/resetPasswd'
+                        path: '/overview',
                     });
-                }
-                return this.$router.push({
-                    path: '/overview',
-                });
-                this.$http.post(this.$url.LOGIN, this.formItem).then(((data) => {
-                    this.$router.push({
-                    path: this.menus[name].link,
-                });
                 }).bind(this));
             },
-            error (obj) {
-                obj.refresh();
-            },
             reset () {
-                this.validation = false;
-                this.username = '';
-                this.password = '';
+                this.$refs.loginForm.resetFields();
             }
         },
         computed: {
@@ -128,5 +156,11 @@
     font-size: 28px;
     color: #fff;
     font-weight: bold;
+}
+.code {
+    position: absolute;
+    right: 100px;
+    width: 100px;
+    height: 36px;
 }
 </style>

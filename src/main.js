@@ -1,5 +1,3 @@
-window.useMock = true;
-
 import 'babel-polyfill'
 import Vue from 'vue';
 import iView from 'iview';
@@ -8,6 +6,7 @@ import Routers from './router';
 import store from './config/store'
 import Util from './libs/util';
 import App from './app.vue';
+import filters from './config/filters';
 import 'iview/dist/styles/iview.css';
 import './styles/common.css';
 import './config/http';
@@ -23,7 +22,9 @@ const RouterConfig = {
 const router = new VueRouter(RouterConfig);
 
 router.beforeEach((to, from, next) => {
+    store.commit('setScreenSize', false);//取消全屏
     //TODO 判断是否第一次登陆
+    //no permission
     if (!store.state.user.username && to.path !== '/') {
         return next({path: '/'});
     }
@@ -31,13 +32,17 @@ router.beforeEach((to, from, next) => {
         return next({path: '/resetPasswd'});
     }
     iView.LoadingBar.start();
-    Util.title(to.meta.title);
+    //Util.title(to.meta.title);
     next();
 });
 
 router.afterEach((to, from, next) => {
     iView.LoadingBar.finish();
     window.scrollTo(0, 0);
+});
+
+Object.keys(filters).forEach(key => {
+    Vue.filter(key, filters[key]);
 });
 
 new Vue({

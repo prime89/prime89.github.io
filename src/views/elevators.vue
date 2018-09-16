@@ -19,13 +19,15 @@
                 </Select>
             </FormItem>
             <FormItem>
-                <Button type="primary" :loading="isSearching" @click="handleSearch()">查询</Button>
+                <Button type="primary" @click="goPage(1)">查询</Button>
             </FormItem>
         </Form>
 
         <div class="main-content">
             <Table stripe :columns="columns" :data="data" style="margin-bottom:20px;"></Table>
-            <Page :total="100" show-sizer />
+            <Page :current="page" :total="total" :page-size="pageSize"
+             @on-page-size-change="changePageSize"
+             @on-change="goPage" show-sizer />
         </div>
         </div>
     </HeaderMenu>
@@ -42,26 +44,39 @@
                     address: '',
                     status: 'all',
                 },
+                total: 0,
+                page: 1,
+                pageSize: 20,//default
                 columns: [
                     {
                         title: '电梯注册码',
-                        key: 'sns'
+                        key: 'registerCode'
                     },
                     {
                         title: '电梯地址',
-                        key: 'address'
+                        key: 'elevatorAddress'
                     },
                     {
                         title: '状态',
-                        key: 'status'
+                        key: 'runningState',
+                        render: (h, params) => {
+                            const images = ( params.row.runningState || []).map(state => {
+                                return h('img', {
+                                    src: `../images/${state.name}${state.value}.svg`
+                                });
+                            });
+                            return h('div', {
+                                class: 'state'
+                            }, images)
+                        },
                     },
                     {
                         title: '楼层',
-                        key: 'floor'
+                        key: 'currentFloor'
                     },
                     {
-                        title: '事件级别',
-                        key: 'level',
+                        title: '故障状况',
+                        key: 'faultState',
                         render: (h, params) => {
                             const cls = {};
                             cls[`level-${params.row.level}`] = true;
@@ -71,64 +86,33 @@
 
                         },
                     },
+                    {
+                        title: '维保单位',
+                        key: 'maintenanCompany',
+                    }
                 ],
                 data: [
-                    {
-                        sns: 'John Brown',
-                        floor: 18,
-                        status: '正常',
-                        address: 'New York No. 1 Lake Park',
-                        level: '2016-10-03'
-                    },
-                    {
-                        sns: 'John Brown',
-                        floor: 18,
-                        status: '正常',
-                        address: 'New York No. 1 Lake Park',
-                        level: '2016-10-03'
-                    },
-                    {
-                        sns: 'John Brown',
-                        floor: 18,
-                        status: '正常',
-                        address: 'New York No. 1 Lake Park',
-                        level: '2016-10-03'
-                    },
-                    {
-                        sns: 'John Brown',
-                        floor: 18,
-                        status: '正常',
-                        address: 'New York No. 1 Lake Park',
-                        level: '2016-10-03'
-                    },
-                    {
-                        sns: 'John Brown',
-                        floor: 18,
-                        status: '正常',
-                        address: 'New York No. 1 Lake Park',
-                        level: '2016-10-03'
-                    },
-                    {
-                        sns: 'John Brown',
-                        floor: 18,
-                        status: '正常',
-                        address: 'New York No. 1 Lake Park',
-                        level: '2016-10-03'
-                    },
-                    {
-                        sns: 'John Brown',
-                        floor: 18,
-                        status: '正常',
-                        address: 'New York No. 1 Lake Park',
-                        level: '2016-10-03'
-                    },
                 ]
             };
         },
+        mounted() {
+            //this.reset
+            this.goPage(1);
+        },
         methods: {
-            handleSearch() {
-                this.isSearching = true;
-                
+            goPage (page) {
+                this.$http.get(this.$url.ELEVATORLIST, {params: Object.assign({page: page, pageSize: this.pageSize}, this.search)}).then(((response) => {
+                    if (response.data.code === 0) {
+                        this.data = response.data.data;
+                        this.total = response.data.total || 0;
+                    } else {
+                        this.$Message.error('系统错误，请稍后尝试');
+                    }
+                }).bind(this));
+            },
+            changePageSize (pageSize) {
+                this.pageSize = pageSize;
+                this.goPage(1);
             }
         },
         components: {

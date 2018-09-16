@@ -21,30 +21,38 @@
                 </Select>
             </FormItem>
             <FormItem>
-                <Button type="primary" :loading="isSearching" @click="handleSearch()">查询</Button>
+                <Button type="primary" :loading="isSearching" @click="goPage">查询</Button>
             </FormItem>
         </Form>
 
         <div class="main-content">
-            <Button style="margin-bottom: 20px;">新增设备</Button>
+            <Button style="margin-bottom: 20px;" @click="openAttachModal">新增设备</Button>
             <Table stripe :columns="columns" :data="data"></Table>
             <Page :current="page" :total="total" @on-change="goPage" show-sizer />
         </div>
 
         <Modal
             v-model="attachModal"
-            title="新增"
-            okText="绑定"
-            @on-ok="attach"
-            @on-cancel="cancel">
-            <p>确定新增绑定该设备吗？</p>
-            <p>绑定操作将会指向什么结果</p>
+            title="新增设备">
+            <Form ref="formItem" :model="formItem" :label-width="100" :rules="ruleValidate">
+                <FormItem label="设备SN码" prop="deviceSNCode">
+                    <Input size="large" v-model="formItem.deviceSNCode" placeholder="请输入设备SN码" style="width: 300px" />
+                </FormItem>
+                <FormItem label="电梯注册码" prop="liftCode">
+                    <Input size="large" v-model="formItem.liftCode" placeholder="请输入电梯注册码" style="width: 300px" />
+                </FormItem>
+            </Form>
+
+            <div slot="footer">
+                <Button type="text" size="large" @click="cancel('modifyModal')">取消</Button>
+                <Button type="primary" size="large" @click="attach">确定</Button>
+            </div>
         </Modal>
 
         <Modal
             v-model="removeModal"
             title="删除"
-            okText="解绑"
+            okText="删除"
             @on-ok="remove"
             @on-cancel="cancel">
             <p>确定新增绑定该设备吗？</p>
@@ -62,20 +70,32 @@
                 current: {},
                 attachModal: false,
                 removeModal: false,
+                formItem: {
+                    deviceSNCode: '',
+                    liftCode: '',
+                },
+                ruleValidate: {
+                    deviceSNCode: [
+                        { required: true, message: '请输入设备SN码', trigger: 'blur' }
+                    ],
+                    liftCode: [
+                        { required: true, message: '请输入电梯注册码', trigger: 'blur' }
+                    ],
+                },
                 total: 0,
                 page: 1,
                 columns: [
                     {
                         title: '设备SN码',
-                        key: 'sns'
+                        key: 'deviceSNCode'
                     },
                     {
                         title: '电梯注册码',
-                        key: 'regCode'
+                        key: 'liftCode'
                     },
                     {
                         title: '状态',
-                        key: 'status'
+                        key: 'workStatus'
                     },
                     {
                         title: '安装地址',
@@ -83,11 +103,11 @@
                     },
                     {
                         title: '安装人员',
-                        key: 'installer'
+                        key: 'operator'
                     },
                     {
                         title: '安装人员电话',
-                        key: 'tel'
+                        key: 'operatorPhone'
                     },
                     {
                         title: '操作',
@@ -97,14 +117,6 @@
                                     opr: true,
                                 }
                             }, [
-                                h('a', {
-                                    href: 'javascript:void(0)',
-                                    on: {
-                                        click: () => {
-                                            this.openAttachModal(params.row)
-                                        }
-                                    }
-                                }, '新增'),
                                 h('a', {
                                     href: 'javascript:void(0)',
                                     on: {
@@ -121,15 +133,12 @@
                 data: []
             };
         },
-        mounted () {
-            this.getDevs();
+        mounted () {//页面渲染初始化事件
+            this.goPage(1);
         },
         methods: {
             goPage (page) { 
-                this.page = page;
-                this.getDevs();
-            },
-            handleSearch() {
+                this.page = page || this.page;
                 this.getDevs();
             },
             getDevs () {
@@ -137,23 +146,30 @@
                     this.data = response.data.data || [];
                     //TODO 分页
                     this.total = response.data.total || 100;
+                }).catch((err) => {
+                    console.log(err);
+                    this.$Message.error('服务异常，请稍后尝试');
                 });
             },
-            openAttachModal(data) {
+            openAttachModal() {
                 this.attachModal = true;
-                this.current = data;
+                this.current = null;
+                this.$refs.formItem.resetFields();
             },
             openRemoveModal(data) {
+                this.current = data;
                 this.removeModal = true;
             },
             attach () {
-                this.$http.post(this.$url.DEV_BIND, {}).then((data) => {
+                this.$http.post(this.$url.DEV_BIND, this.formItem).then((data) => {
                     this.$Message.success('绑定成功');
+                    this.goPage(1);
                 });
             },
             remove () {
-                this.$http.post(this.$url.DEV_UNBIND, {}).then((data) => {
-                    this.$Message.success('解绑成功');
+                this.$http.post(this.$url.DEV_UNBIND, this.current).then((data) => {
+                    this.$Message.success('删除成功');
+                    this.goPage(1);
                 });
             },
             cancel() {

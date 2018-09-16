@@ -1,5 +1,6 @@
 <template>
     <HeaderMenu>
+        <div class="map-container">
         <div id="allmap"></div>
         <div class="type-cells">
             <CellGroup @on-click="select">
@@ -19,7 +20,23 @@
             <p style="color:#ff4c4c;"><span>故障电梯：</span><span>{{offlineCount}}</span><span>台</span></p>
         </div>
 
-        <Form ref="formInline" label-position="right" :model="search" inline :label-width="70" class="search-bar search-opened">
+        <div class="operation" v-show="!searchBarOpened">
+            <Tooltip content="搜索">
+                <Icon type="ios-search" class="btn" @click="searchBarOpened=true"></Icon>
+            </Tooltip>
+        
+            <Tooltip content="全屏" v-show="!isFullScreen">
+                <Icon type="md-expand" class="btn" @click="fullScreen"></Icon>
+            </Tooltip>
+
+            <Tooltip content="退出全屏" v-show="isFullScreen">
+                <Icon type="md-power" class="btn" @click="shrink"></Icon>
+            </Tooltip>
+            
+        </div>
+
+        <Form ref="formInline" label-position="right" :class="{'search-opened': searchBarOpened}"
+         :model="search" inline :label-width="70" class="search-bar ">
             <FormItem label="设备SN码" :label-width="80">
                 <Input type="text" v-model="search.snCode"></Input>
             </FormItem>
@@ -42,12 +59,21 @@
             <FormItem>
                 <Button type="primary" :loading="isSearching" @click="handleSearch()">查询</Button>
             </FormItem>
+
+            <div class="btn">
+                <Icon class="icon" type="ios-close" size="30" @click="searchBarOpened=false"></Icon>
+            </div>
         </Form>
+        </div>
     </HeaderMenu>
 </template>
 <script>
     import HeaderMenu from '../components/common/headerMenu.vue';
+    import { mapMutations } from 'vuex'
     import data from '../libs/data';
+
+    const mutations = mapMutations(['fullScreen', 'shrink']);
+
     export default {
         data () {
             return {
@@ -58,6 +84,7 @@
                 map: null,
                 search: {},
                 isSearching: false,
+                searchBarOpened: false,
                 types: {
                     all: {
                         name: '全部电梯',
@@ -85,6 +112,8 @@
             this.initMap();
         },
         methods: {
+            fullScreen: mutations.fullScreen,
+            shrink: mutations.shrink,
             initMap () {
                 const self = this;
                 var map = this.map = new BMap.Map("allmap");    // 创建Map实例
@@ -135,10 +164,17 @@
 
                 //get data by type
             }, 
+            openSearchBar () {
+                this.searchBarOpened = true;
+            }
+
         },
         computed: {
             points () {
                 return this.$store.state.elevators;
+            },
+            isFullScreen () {
+                return this.$store.state.isFullScreen;
             }
         },
         watch: {
@@ -152,12 +188,16 @@
     }
 </script>
 <style scoped>
+    .map-container{
+        height: 100%;
+        position: relative;
+    }
     #allmap{
         height: 100%;
     }
     .type-cells{
         position: absolute;
-        top: 80px;
+        top: 20px;
         left: 20px;
         z-index: 1000;
         background: #fff;
@@ -179,13 +219,32 @@
         font-size: 16px;
         font-weight: bold;
     }
+    .operation {
+        width: 80px;
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        color: #fff;
+        background-color: rgba(51, 51, 51, 0.9);
+        text-align: center;
+    }
+
+    .operation .btn{
+        margin: 5px 5px;
+        cursor: pointer;
+        font-size: 24px;
+    }
+
+    .operation .btn:hover{
+        color: #54a1f3;
+    }
 
     .search-bar {
         position: absolute;
         padding: 20px;
         width: 100%;
         left: 0;
-        top: 60px;
+        top:0;
         display: none;
         color: #fff;
         background: #333;
@@ -194,5 +253,17 @@
     }
     .search-opened {
         display: block;
+    }
+    .search-bar .btn{
+        position: relative;
+    }
+    .search-bar .btn .icon{
+        position: absolute;
+        cursor: pointer;
+        right: -15px;
+        top: -75px;
+    }
+    .search-bar .btn .icon:hover{
+        color: #54a1f3;
     }
 </style>

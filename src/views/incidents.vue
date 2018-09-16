@@ -23,12 +23,31 @@
                 <Cascader :data="data" v-model="search.zone" style="width: 300px;"></Cascader>
             </FormItem>
             <FormItem>
-                <Button type="primary" @click="handleSubmit('formInline')">查询</Button>
+                <Button type="primary" @click="goPage(1)">查询</Button>
             </FormItem>
         </Form>
-       <div class="main-content">
-           
-       </div>
+        <div class="main-content">
+            <Table stripe :columns="columns" :data="data"></Table>
+            <Page :current="page" :total="total" @on-change="goPage" show-sizer />
+        </div>
+
+         <Modal
+            v-model="modal"
+            title="关闭事件">
+            <Form ref="formItem" :model="formItem" :label-width="100" :rules="ruleValidate">
+                <FormItem label="电梯注册码">
+                    <span>{{current.registerCode}}</span>
+                </FormItem>
+                <FormItem label="关闭原因" prop="closeReason">
+                    <Input type="textarea" size="large" v-model="formItem.closeReason" placeholder="关闭原因" style="width: 300px" />
+                </FormItem>
+            </Form>
+
+            <div slot="footer">
+                <Button type="text" size="large" @click="cancel">取消</Button>
+                <Button type="primary" size="large" @click="close">确定</Button>
+            </div>
+        </Modal>
     </HeaderMenu>
 </template>
 <script>
@@ -36,12 +55,25 @@
     export default {
         data () {
             return {
+                page: 1,
+                total: 0,
+                modal: false,
                 search: {
                     time: '',
                     level: '',
                     zone: [],
                 },
-                data: [{
+                formItem: {
+                    registerCode: '',
+                    closeReason: '',
+                },
+                ruleValidate: {
+                    closeReason: [
+                        { required: true, message: '请输入关闭原因', trigger: 'blur' }
+                    ]
+                },
+                current: {},
+                address: [{
                     value: 'beijing',
                     label: '北京',
                     children: [
@@ -88,6 +120,113 @@
                         }
                     ],
                 }],
+                columns: [
+                    {
+                        title: '时间',
+                        key: 'eventTime'
+                    },
+                    {
+                        title: '事件名称',
+                        key: 'eventName'
+                    },
+                    {
+                        title: '事件级别',
+                        key: 'eventName'
+                    },
+                    {
+                        title: '电梯注册码',
+                        key: 'registerCode'
+                    },
+                    {
+                        title: '电梯地址',
+                        key: 'elevatorAddress'
+                    },
+                    {
+                        title: '维保人员',
+                        key: 'security'
+                    },
+                    {
+                        title: '维保人员电话',
+                        key: 'securityTel'
+                    },
+                    {
+                        title: '是否关闭',
+                        key: 'isClose',
+                        render: (h, params) => {
+                            return h('div', {
+                                class: {
+                                    'close-info' : true, 
+                                    'closed': params.isClose,
+                                }
+                            }, params.isClose? '是': '否');
+                        }
+                    },
+                    {
+                        title: '关闭人',
+                        key: 'closePersonnel'
+                    },
+                    {
+                        title: '操作',
+                        render: (h, params) => {
+                            return h('div', {
+                                class: {
+                                    opr: true,
+                                    disabled: params.row.isClose
+                                }
+                            }, [
+                                h('a', {
+                                    href: 'javascript:void(0)',
+                                    on: {
+                                        click: () => {
+                                            this.openCloseModal(params.row)
+                                        }
+                                    }
+                                }, '关闭事件')
+                            ]);
+
+                        },
+                    },
+                ],
+                data: []
+            }
+        },
+        mounted () {
+            this.goPage(1);
+        },
+        methods: {
+            goPage (page) { 
+                this.page = page;
+                this.$http.get(this.$url.INCIDENTLIST).then((response) => {
+                    this.data = response.data.data || [];
+                    //TODO 分页
+                    this.total = response.data.total || 100;
+                }).catch((err) => {
+                    console.log(err);
+                    this.$Message.error('服务异常，请稍后尝试');
+                });
+            },
+            openCloseModal(data) {
+                this.modal = true;
+                this.current = data;
+                this.$refs.formItem.resetFields();
+            },
+            close () {
+                this.$refs.formItem.validate(valid => {
+                    if (!valid) {
+                        return;
+                    }
+
+                    this.formItem.registerCode = this.current.registerCode;
+                    this.$http.post(this.$url.CLOSE_INCIDENT, this.formItem).then((data) => {
+                        this.modal = false;
+                        this.$Message.success('关闭成功');
+                        this.goPage(this.page);//刷新当前页
+                    });
+                });
+                
+            },
+            cancel() {
+                this.modal = false;
             }
         },
         components: {

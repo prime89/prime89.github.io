@@ -31,5 +31,14 @@ module.exports = merge(webpackBaseConfig, {
             template: './src/template/index.ejs',
             inject: false
         })
-    ]
+    ],
+    devServer: {
+        proxy: {
+            '/api': {
+              target: 'http://192.168.31.106:8080',
+              pathRewrite: {'^/api': ''},
+              secure: false
+            }
+        }
+    }
 });

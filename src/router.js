@@ -10,6 +10,7 @@ const users = (resolve) => require(['./views/users.vue'], resolve);
 const incidents = (resolve) => require(['./views/incidents.vue'], resolve);
 const resetpasswd = (resolve) => require(['./views/resetpasswd.vue'], resolve);
 const report = (resolve) => require(['./views/report.vue'], resolve);
+const info = (resolve) => require(['./views/info.vue'], resolve);
 
 const routers = [
     { path: '*', redirect: '/' },
@@ -51,6 +52,9 @@ const routers = [
     }, {
         path: '/report',
         component: report,
+    }, {
+        path: '/info',
+        component: info,
     },
 ];
 export default routers;

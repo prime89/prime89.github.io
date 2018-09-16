@@ -1,11 +1,13 @@
 <template>
     <div class="layout">
         <Layout>
-            <Header>
+            <Header v-show="!isFullScreen">
                 <Menu mode="horizontal" theme="dark" active-name="1"  @on-select="handleItemSelected">
                     <div class="layout-logo">
                         <img src="../../images/u96.png" alt="" width="40px" height="40px">
                         <span>电梯动态监测系统</span>
+
+                        <span class="location"><Icon type="ios-pin" />{{location}}</span>
                     </div>
                     <div class="layout-nav">
                         <MenuItem 
@@ -39,43 +41,50 @@
     </div>
 </template>
 <script>
+    import permission from '../../config/permission';
     export default {
         data () {
             return {
                 user: {
                     username: '',
                 },
-                menus: [{
-                    name: '电梯总览',
-                    link: '/overview',
-                }, {
-                    name: '电梯管理',
-                    link: '/elevators',
-                }, {
-                    name: '事件管理',
-                    link: '/incidents',
-                }, {
-                    name: '设备管理',
-                    link: '/devs',
-                }, {
-                    name: '用户管理',
-                    link: '/users',
-                }, {
-                    name: '报表',
-                    link: '/report',
-                }, ],
+                location: '深圳市南山区',
             }
         },
         mounted () {
             this.user = this.$store.state.user;
 
         },
+        computed: {
+            menus () {
+                const role = this.$store.state.role; 
+                const pages = permission.pages.filter(page => {
+                    if (!!page.r.find(r => r === role) ) {
+                        page.permission = 'r';
+                        return page.ismenu;
+                    } else if (!!page.w.find(r => r === role) ) {
+                        page.permission = 'w';
+                        return page.ismenu;
+                    } else {
+                        page.permission = null;
+                        return false;
+                    }
+                    return false;
+                });
+                return pages;
+            },
+            isFullScreen () {
+                return this.$store.state.isFullScreen;
+            }
+        },
         methods: {
             handleItemSelected(name) {
                 if (name === 'logout') {
                     return this.logout();
                 } else if (name === 'userInfo') {
-                    return;
+                    return this.$router.push({
+                        path: '/info'
+                    });
                 }
                 this.$router.push({
                     path: this.menus[name].link,
@@ -118,6 +127,14 @@
     font-style: normal;
     font-size: 18px;
     color: white;
+}
+
+.layout-logo .location{
+    margin-left: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 60px;
+    margin-right: 40px;
 }
 .layout-nav{
     width: 1000px; 
