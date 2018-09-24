@@ -22,7 +22,15 @@
             </div>
             <div class="row upper">
                 <div class="col brand-chart" id="brand-chart"></div>
-                <div class="col status-chart" id="status-chart"></div>
+                <div class="col status-chart" >
+                    <div class="period-slt">
+                        <RadioGroup v-model="period" type="button" class="period-radio">
+                            <Radio label="year">按年</Radio>
+                            <Radio label="month">按月</Radio>
+                        </RadioGroup>
+                    </div>
+                    <div  id="status-chart"></div>
+                </div>
             </div>
             <div class="row bellow" >
                 <div class="col" id="bad-chart" ></div>
@@ -43,13 +51,13 @@
             return {
                 time: new Date().getTime(),
                 internal: null,
+                period: 'year',
             }
         },
         mounted () {
             this.getBrandData();
             this.getStatusData();
-            this.initStatusChart();
-            this.initBadChart();
+            this.getBadData();
             this.startInternal();
         },
         destroyed () {
@@ -74,8 +82,36 @@
                 });
             },
             getStatusData() {
-                this.$http.post(this.$url.REPORT_STATUS_DATA, {userId: 1}).then((response) => {
+                this.$http.post(this.$url.REPORT_STATUS_DATA, {userId: 1, period: this.period}).then((response) => {
                     this.initStatusChart(response.data.data);
+                }).catch((data) => {console.log(1);
+                    this.initStatusChart( [
+                        {
+                            "elv_area": "南山区",
+                            "num": 1,
+                            "event_level": "2"
+                        },
+                        {
+                            "elv_area": "福田区",
+                            "num": 1,
+                            "event_level": "1"
+                        },
+                        {
+                            "elv_area": "福田区",
+                            "num": 1,
+                            "event_level": "2"
+                        },
+                        {
+                            "elv_area": "罗湖区",
+                            "num": 1,
+                            "event_level": "3"
+                        }
+                    ]);
+                });
+            },
+            getBadData() {
+                this.$http.post(this.$url.REPORT_BAD_DATA, {userId: 1}).then((response) => {
+                    this.initBadChart(response.data.data); 
                 });
             },
             startInternal () {
@@ -136,13 +172,51 @@
             },
             initStatusChart (data) {
                 const areas = {};
-                (data.data || []).forEach(d => {
+                const eventMap = {
+                    1: 'normal',
+                    2: 'exception',
+                    3: 'accident',
+                };
+                (data || []).forEach(d => {
                     if (!areas[d.elv_area]) {
-                        areas[d.elv_area] = {};
+                        areas[d.elv_area] = {
+                            'normal': 0,
+                            'exception': 0,
+                            'accident': 0,
+                        };
                     } 
-                    
+                    areas[d.elv_area][eventMap[d.event_level]] = d.num;    
                 });
 
+                const optData = [{
+                        name:'正常',
+                        type:'bar',
+                        stack: 'status',
+                        data:[],
+                        barMaxWidth: 40,
+                    },
+                    {
+                        name:'异常',
+                        type:'bar',
+                        stack: 'status',
+                        data:[],
+                        barMaxWidth: 40,
+                    },
+                    {
+                        name:'故障',
+                        type:'bar',
+                        stack: 'status',
+                        data:[],
+                        barMaxWidth: 40,
+                    },];
+
+                const areaKeys = Object.keys(areas);
+                areaKeys.forEach(a => {
+                    optData[0].data.push(areas[a].normal);
+                    optData[1].data.push(areas[a].exception);
+                    optData[2].data.push(areas[a].accident);
+                });
+                console.log(optData);
 
                 const chart = echarts.init(document.getElementById('status-chart'));
                 const option = {
@@ -176,7 +250,7 @@
                     xAxis : [
                         {
                             type : 'category',
-                            data : ['罗湖区','南山区','龙岗区','福田区','龙华新区','宝安区','盐田区']
+                            data : areaKeys
                         }
                     ],
                     yAxis : [
@@ -184,34 +258,19 @@
                             type : 'value'
                         }
                     ],
-                    series : [
-                        {
-                            name:'正常',
-                            type:'bar',
-                            stack: 'status',
-                            data:[320, 332, 301, 334, 390, 330, 320],
-                            barMaxWidth: 40,
-                        },
-                        {
-                            name:'异常',
-                            type:'bar',
-                            stack: 'status',
-                            data:[120, 132, 101, 134, 90, 230, 210],
-                            barMaxWidth: 40,
-                        },
-                        {
-                            name:'故障',
-                            type:'bar',
-                            stack: 'status',
-                            data:[220, 182, 191, 234, 290, 330, 310],
-                            barMaxWidth: 40,
-                        },
-                    ],
+                    series : optData,
                     
                 };
                 chart.setOption(option);
             },
-            initBadChart () {
+            initBadChart (data) {
+                const months = [];
+                const datas =( data || []).map(d => {
+                    months.push(d.month);
+                    return d.count;
+                });
+
+
                 const chart = echarts.init(document.getElementById('bad-chart'));
                 const option = {
                     title: {
@@ -231,18 +290,23 @@
                     },
                     xAxis: {
                         type: 'category',
-                        data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
+                        data: months
                     },
                     yAxis: {
                         type: 'value'
                     },
                     series: [{
-                        data: [820, 932, 901, 934, 1290, 1330, 1320],
+                        data: datas,
                         type: 'line'
                     }],
                 };
                 chart.setOption(option);
             },
+        },
+        watch: {
+            period () {
+                this.getStatusData();
+            }
         },
 
         components: {
@@ -325,7 +389,17 @@
     height: 100%;
 }
 .row .status-chart{
+    position: relative;
     width: 66.6666%;
     height: 100%;
 }
+.row .status-chart .period-slt{
+    position: absolute;
+    right: 20px;
+    z-index: 999;
+}
+ #status-chart{
+     width: 100%;
+     height: 100%;
+ }
 </style>

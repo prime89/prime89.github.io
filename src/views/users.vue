@@ -8,13 +8,16 @@
                 <Input type="text" v-model="search.installer"></Input>
             </FormItem>
             <FormItem>
-                <Button type="primary" :loading="isSearching" @click="handleSearch()">查询</Button>
+                <Button type="primary" :loading="isSearching" @click="goPage(1)">查询</Button>
             </FormItem>
         </Form>
 
         <div class="main-content">
             <Table stripe :columns="columns" :data="data" style="margin-bottom:20px;"></Table>
-            <Page :total="100" show-sizer />
+            <Page :total="100" page-size="pageSize"
+            @on-page-size-change="changePageSize"
+            @change="goPage"
+            show-sizer />
         </div>
 
         <Modal
@@ -64,6 +67,8 @@
                 modifyModal: false,
                 deleteModal: false,
                 resetModal: false,
+                pageSize: 10,
+                pageNo: 1,
                 search: {
                     regCode: '',
                     installer: '',
@@ -136,14 +141,19 @@
             };
         },
         mounted () {
-            this.getUsers();
+            this.goPage(1);
         },
         methods: {
-            handleSearch() {
-                this.getUsers();
+            changePageSize (size) {
+                this.pageSize = size;
+                this.goPage(1);
             },
-            getUsers () {
-                this.$http.get(this.$url.USERLIST, {}).then(((response) => {
+            goPage (pageNo) {
+                this.$http.post(this.$url.USERLIST, {
+                    userName: '',
+                    telephone: '',
+                    num: String(pageNo),
+                }).then(((response) => {
                     this.data = response.data.data || [];
                     this.total = response.data.total || 0;
                 }).bind(this));

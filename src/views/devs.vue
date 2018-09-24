@@ -2,22 +2,22 @@
     <HeaderMenu>
         <Form ref="formInline" label-position="right" :model="search" inline :label-width="70" class="search-bar">
             <FormItem label="设备SN码" :label-width="80">
-                <Input type="text" v-model="search.snCode"></Input>
+                <Input type="text" v-model="search.deviceSNCode"></Input>
             </FormItem>
             <FormItem label="安装人员">
-                <Input type="text" v-model="search.installer"></Input>
+                <Input type="text" v-model="search.operator"></Input>
             </FormItem>
             <FormItem label="安装地址">
-                <Input type="text" v-model="search.address"></Input>
+                <Input type="text" v-model="search.elv_Address"></Input>
             </FormItem>
             <FormItem label="电梯注册码" :label-width="80">
-                <Input type="text" v-model="search.regCode"></Input>
+                <Input type="text" v-model="search.registerCode"></Input>
             </FormItem>
             <FormItem label="状态">
                 <Select v-model="search.status" style="width:200px">
                     <Option value="all" key="all">全部</Option>
-                    <Option value="online" key="online">在线</Option>
-                    <Option value="offline" key="offline">离线</Option>
+                    <Option value="online" key="1">在线</Option>
+                    <Option value="offline" key="0">离线</Option>
                 </Select>
             </FormItem>
             <FormItem>
@@ -38,8 +38,30 @@
                 <FormItem label="设备SN码" prop="deviceSNCode">
                     <Input size="large" v-model="formItem.deviceSNCode" placeholder="请输入设备SN码" style="width: 300px" />
                 </FormItem>
-                <FormItem label="电梯注册码" prop="liftCode">
-                    <Input size="large" v-model="formItem.liftCode" placeholder="请输入电梯注册码" style="width: 300px" />
+                <FormItem label="电梯注册码" prop="registerCode">
+                    <Input size="large" v-model="formItem.registerCode" placeholder="请输入电梯注册码" style="width: 300px" />
+                </FormItem>
+                <FormItem label="电梯站数">
+                    <Input size="large" v-model="fromStation" placeholder="请输入电梯注册码" style="width: 100px" />
+                    层-
+                    <Input size="large" v-model="toStation" placeholder="请输入电梯注册码" style="width: 100px" />
+                    层
+                    <Checkbox
+                    class="check-all"
+                    :indeterminate="indeterminate"
+                    :value="checkAll"
+                    @click.prevent.native="handleCheckAll">全选</Checkbox>
+                </FormItem>
+
+                <FormItem label="">
+                    <CheckboxGroup :class="station-group" v-model="checkAllGroup" @on-change="checkAllGroupChange">
+                        <Input class="station-item" :value="station" v-for="(station, index) in stations" :key="index" @on-change="changeStation($event, index)">
+                            <Checkbox slot="prepend" class="station-item-checkbox" :label="index">
+                                <span class="text"></span>
+                            </Checkbox>
+                            <span slot="append">层</span>
+                        </Input>
+                    </CheckboxGroup>
                 </FormItem>
             </Form>
 
@@ -72,13 +94,19 @@
                 removeModal: false,
                 formItem: {
                     deviceSNCode: '',
-                    liftCode: '',
+                    registerCode: '',
                 },
+                fromStation: 0,
+                toStation: 1,
+                stations: {1: '1'},
+                indeterminate: true,
+                checkAll: false,
+                checkAllGroup: [],
                 ruleValidate: {
                     deviceSNCode: [
                         { required: true, message: '请输入设备SN码', trigger: 'blur' }
                     ],
-                    liftCode: [
+                    registerCode: [
                         { required: true, message: '请输入电梯注册码', trigger: 'blur' }
                     ],
                 },
@@ -91,15 +119,20 @@
                     },
                     {
                         title: '电梯注册码',
-                        key: 'liftCode'
+                        key: 'registerCode'
                     },
                     {
                         title: '状态',
-                        key: 'workStatus'
+                        key: 'onlineStatus',
+                        render (h, params) {
+                            return h('span', 
+                                params.row.onlineStatus? '在线': '离线'
+                            );
+                        }
                     },
                     {
                         title: '安装地址',
-                        key: 'address'
+                        key: 'elv_Address'
                     },
                     {
                         title: '安装人员',
@@ -136,19 +169,71 @@
         mounted () {//页面渲染初始化事件
             this.goPage(1);
         },
+        computed: {
+        },
+        watch: {
+            toStation() {
+                this.setStations();
+            },
+            fromStation() {
+                this.setStations();
+            }
+        },
         methods: {
+            setStations () {
+                this.stations = {};
+                const toStation = this.toStation || 1;
+                for(let i=this.fromStation;i<=toStation;i++) {
+                    if (i === 0) {continue;}
+                    this.stations[i] = String(i);
+                }
+            },
+            changeStation(e, index) {
+                this.stations[index] = e.target.value;
+            },
+            handleCheckAll () {
+                if (this.indeterminate) {
+                    this.checkAll = false;
+                } else {
+                    this.checkAll = !this.checkAll;
+                }
+                this.indeterminate = false;
+
+                if (this.checkAll) {
+                    this.checkAllGroup = Object.keys(this.stations);
+                } else {
+                    this.checkAllGroup = [];
+                }
+            },
+            checkAllGroupChange (data) {
+                if (data.length === this.stations.length) {
+                    this.indeterminate = false;
+                    this.checkAll = true;
+                } else if (data.length > 0) {
+                    this.indeterminate = true;
+                    this.checkAll = false;
+                } else {
+                    this.indeterminate = false;
+                    this.checkAll = false;
+                }
+            },
             goPage (page) { 
                 this.page = page || this.page;
                 this.getDevs();
             },
             getDevs () {
-                this.$http.get(this.$url.DEVLIST).then((response) => {
+                this.$http.post(this.$url.DEVLIST, {
+                    registerCode: '',
+                    deviceSNCode: '',
+                    onlineStatus: '',
+                    elv_Address: '',
+                    operator: '',
+
+                }).then((response) => {
                     this.data = response.data.data || [];
                     //TODO 分页
                     this.total = response.data.total || 100;
                 }).catch((err) => {
-                    console.log(err);
-                    this.$Message.error('服务异常，请稍后尝试');
                 });
             },
             openAttachModal() {
@@ -161,13 +246,25 @@
                 this.removeModal = true;
             },
             attach () {
-                this.$http.post(this.$url.DEV_BIND, this.formItem).then((data) => {
+                const arr = this.checkAllGroup.sort((a, b) => {
+                    return a - b;
+                }).map(a => {
+                    return this.stations[a];
+                });
+
+                this.$http.post(this.$url.DEV_BIND, Object.assign({
+                    userId: this.$store.state.user.id||1,
+                    stations: JSON.stringify(arr),
+                }, this.formItem)).then((data) => {
                     this.$Message.success('绑定成功');
                     this.goPage(1);
+                    this.cancel();
                 });
             },
             remove () {
-                this.$http.post(this.$url.DEV_UNBIND, this.current).then((data) => {
+                this.$http.post(this.$url.DEV_UNBIND, {
+                    registerCode: this.current.registerCode
+                }).then((data) => {
                     this.$Message.success('删除成功');
                     this.goPage(1);
                 });
@@ -183,5 +280,21 @@
 </script>
 
 <style scoped>
-
+.station-group{
+    /* width: 70px; */
+}
+.station-item{
+    float: left;
+    width: 100px;
+    margin: 5px;
+}
+.station-item-checkbox{
+    width: 4px;
+}
+.station-item-checkbox+span{
+    display: none;
+}
+.check-all{
+    margin-left: 20px;
+}
 </style>

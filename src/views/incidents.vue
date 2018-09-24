@@ -196,7 +196,16 @@
         methods: {
             goPage (page) { 
                 this.page = page;
-                this.$http.get(this.$url.INCIDENTLIST).then((response) => {
+                this.$http.post(this.$url.INCIDENTLIST, {
+                    registerCode: '',
+                    eventName: '',
+                    eventLevel: '',
+                    elvProvince: '',
+                    elvCity: '',
+                    elvArea: '',
+                    pageSize: 10,
+                    pageNo: 1,
+                }).then((response) => {
                     this.data = response.data.data || [];
                     //TODO 分页
                     this.total = response.data.total || 100;

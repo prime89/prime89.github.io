@@ -107,3 +107,7 @@ html, body {
 .ivu-page{
     margin-top: 20px; 
 }
+.period-radio  .ivu-radio-wrapper-checked{
+    background: #2d8cf0;
+    color: #fff;
+}
