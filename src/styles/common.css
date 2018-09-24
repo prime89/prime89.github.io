@@ -43,13 +43,13 @@ html, body {
 }
 .info-line dt{
     float:left;
-    width: 80px;
+    width: 120px;
 }
 .info-line dt, .info-line dd{
     display:block;
     font-size: 14px;
     color: #333333;
-    line-height: 26px;
+    line-height: 30px;
     text-rendering: optimizeLegibility;
     -webkit-font-feature-settings: "kern";
     -moz-font-feature-settings: "kern";

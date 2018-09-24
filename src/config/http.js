@@ -4,7 +4,7 @@ import iView from 'iview';
 import mockData from '@/config/mock';
 import urls from '@/config/urls';
 
-if (true) {//use mock data
+if (false) {//use mock data
     const MockAdapter = require('axios-mock-adapter');
     var mock = new MockAdapter(axios);
 
@@ -13,15 +13,19 @@ if (true) {//use mock data
     });
 }
 
-//axios.defaults.baseURL = '/api';
+axios.defaults.baseURL = '/auth-web';
 Vue.axios = axios;
 
 //axios.defaults.headers.common['Content-Type'] = 'multipart/form-data';
 
 axios.interceptors.response.use(function (response) {
     // Do something with response data
-    if (response.data.code !== 0) {
-        iView.Message.error('服务不可用');
+    if (response.data.code != 0) {
+        if (response.data.msg) {
+            iView.Message.error(response.data.msg);
+        } else {
+            iView.Message.error('服务不可用');
+        }
         return  Promise.reject('error');
     }
     return response;

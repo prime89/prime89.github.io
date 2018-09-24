@@ -47,6 +47,7 @@
         },
         mounted () {
             this.getBrandData();
+            this.getStatusData();
             this.initStatusChart();
             this.initBadChart();
             this.startInternal();
@@ -68,8 +69,13 @@
             fullScreen: mutations.fullScreen,
             shrink: mutations.shrink,
             getBrandData() {
-                this.$http.get(this.$url.REPORT_BRAND_DATA, {params: {}}).then((response) => {
+                this.$http.post(this.$url.REPORT_BRAND_DATA, {userId: 1}).then((response) => {
                     this.initBrandChart(response.data.data);
+                });
+            },
+            getStatusData() {
+                this.$http.post(this.$url.REPORT_STATUS_DATA, {userId: 1}).then((response) => {
+                    this.initStatusChart(response.data.data);
                 });
             },
             startInternal () {
@@ -79,6 +85,15 @@
                 }, 1000);
             },
             initBrandChart (data) {
+                const brandNames = [];
+                const brandData = data.brandRatio.map(b => {
+                    brandNames.push(b.ppxh);
+                    return {
+                        name: b.ppxh,
+                        value: b.count, 
+                    }
+                });
+
                 const chart = echarts.init(document.getElementById('brand-chart'));
                 const option = {
                     title : {
@@ -97,7 +112,7 @@
                         textStyle: {
                             color: '#fff',
                         },
-                        data: ['日立','三菱','奥克斯','其他',]
+                        data: brandNames,
                     },
                     series : [
                         {
@@ -105,35 +120,7 @@
                             type: 'pie',
                             radius : '55%',
                             center: ['50%', '60%'],
-                            data:[
-                                {
-                                    value:335, 
-                                    name:'日立', 
-                                    // label: {color: '#da2f4b',},
-                                    // itemStyle: {
-                                    //     color: '#da2f4b',
-                                    // }
-                                },
-                                {
-                                    value:310, 
-                                    name:'三菱', 
-                                    // label: {color: '#1095d9'},
-                                    // itemStyle: {
-                                    //     color: '#1095d9',
-                                    // }
-                                },
-                                {
-                                    value:234, name:'奥克斯', 
-                                    // label: {color: '#c4a657'},
-                                    // itemStyle: {
-                                    //     color: '#c4a657',
-                                    // }
-                                },
-                                {
-                                    value:135, name:'其他',
-                                    // label: {color: '#1095d9'},
-                                },
-                            ],
+                            data: brandData,
                             itemStyle: {
                                 emphasis: {
                                     shadowBlur: 10,
@@ -147,7 +134,16 @@
 
                 chart.setOption(option);
             },
-            initStatusChart () {
+            initStatusChart (data) {
+                const areas = {};
+                (data.data || []).forEach(d => {
+                    if (!areas[d.elv_area]) {
+                        areas[d.elv_area] = {};
+                    } 
+                    
+                });
+
+
                 const chart = echarts.init(document.getElementById('status-chart'));
                 const option = {
                     title: {

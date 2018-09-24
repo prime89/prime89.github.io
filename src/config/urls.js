@@ -1,5 +1,6 @@
 export default {
-    LOGIN: '/login',
+    CODE: '/setuser/validate',
+    LOGIN: '/setuser/login',
     LOGOUT: '/logout',
     RESET_PASSWORD: '/resetPasswd',
     USERLIST: '/setuser/user',
@@ -13,11 +14,15 @@ export default {
     DEV_UNBIND: '/devs/unbind',
 
     //elevators
-    ELEVATORLIST: '/elevators',
+    ELEVATOR_DETAIL: '/elevatorInfo/queryElevatorInfo',
+    ELEVATORLIST: '/elevatorInfo/queryElevatorList',
     ELEVATORHISTORY: '/history',
 
     //incidents
     INCIDENTLIST: '/incidents',
     CLOSE_INCIDENT: '/incidents',
+
+    //report
+    REPORT_BRAND_DATA: '/report/brandRatio',
 
 };

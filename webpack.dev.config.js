@@ -34,9 +34,9 @@ module.exports = merge(webpackBaseConfig, {
     ],
     devServer: {
         proxy: {
-            '/api': {
-              target: 'http://192.168.31.106:8080',
-              pathRewrite: {'^/api': ''},
+            '/auth-web': {
+              target: 'http://193.112.97.65:28080',
+              //pathRewrite: {'^/auth': '/web-auth'},
               secure: false
             }
         }

@@ -24,7 +24,9 @@
                                 <Icon type="ios-contact" :size="28"/>
                                 {{this.user.username}}
                             </template>
-                            <MenuItem name="userInfo">用户信息</MenuItem>
+                            <MenuItem name="userInfo">
+                                用户信息
+                            </MenuItem>
                         </Submenu>
                         <div style="float:left;">|</div>
                         <MenuItem name="logout">

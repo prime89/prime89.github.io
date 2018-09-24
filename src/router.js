@@ -1,7 +1,7 @@
 import store from './config/store';
 const home = (resolve) => require(['./views/index.vue'], resolve);
 const login = (resolve) => require(['./views/login.vue'], resolve);
-const elevators= (resolve) => require(['./views/elevators.vue'], resolve);
+const elevators= (resolve) => require(['./views/elevators2.vue'], resolve);
 const elevatordetail = (resolve) => require(['./views/elevatordetail.vue'], resolve);
 const elevatorhistory = (resolve) => require(['./views/elevatorhistory.vue'], resolve);
 const overview = (resolve) => require(['./views/overview.vue'], resolve);
