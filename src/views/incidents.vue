@@ -28,7 +28,11 @@
         </Form>
         <div class="main-content">
             <Table stripe :columns="columns" :data="data"></Table>
-            <Page :current="page" :total="total" @on-change="goPage" show-sizer />
+            <Page :current="page" :total="total" 
+            :page-size="pageSize"
+            @on-change="goPage" 
+            @on-page-size-change="changePageSize" 
+            show-sizer />
         </div>
 
          <Modal
@@ -56,6 +60,7 @@
         data () {
             return {
                 page: 1,
+                pageSize: 10,
                 total: 0,
                 modal: false,
                 search: {
@@ -139,31 +144,31 @@
                     },
                     {
                         title: '电梯地址',
-                        key: 'elevatorAddress'
+                        key: 'elvAddress'
                     },
                     {
                         title: '维保人员',
-                        key: 'security'
+                        key: 'elvMpersonnel'
                     },
                     {
                         title: '维保人员电话',
-                        key: 'securityTel'
+                        key: 'elvMpersonnelTel'
                     },
                     {
                         title: '是否关闭',
-                        key: 'isClose',
-                        render: (h, params) => {
+                        key: 'eventStatus',
+                        render: (h, params) => {console.log(params);
                             return h('div', {
                                 class: {
                                     'close-info' : true, 
-                                    'closed': params.isClose,
+                                    'closed': params.row.eventStatus,
                                 }
-                            }, params.isClose? '是': '否');
+                            }, params.row.eventStatus == 1? '否': '是');
                         }
                     },
                     {
                         title: '关闭人',
-                        key: 'closePersonnel'
+                        key: 'closer'
                     },
                     {
                         title: '操作',
@@ -194,6 +199,10 @@
             this.goPage(1);
         },
         methods: {
+            changePageSize(pageSize) {
+                this.pageSize = pageSize;
+                this.goPage(1);
+            },
             goPage (page) { 
                 this.page = page;
                 this.$http.post(this.$url.INCIDENTLIST, {
@@ -203,12 +212,13 @@
                     elvProvince: '',
                     elvCity: '',
                     elvArea: '',
-                    pageSize: 10,
+                    pageSize: this.pageSize,
                     pageNo: 1,
                 }).then((response) => {
-                    this.data = response.data.data || [];
+                    const data = response.data.data;
+                    this.data =  data.eventInfoList || [];
                     //TODO 分页
-                    this.total = response.data.total || 100;
+                    this.total = data.total || 0;
                 }).catch((err) => {
                     console.log(err);
                     this.$Message.error('服务异常，请稍后尝试');
@@ -225,8 +235,10 @@
                         return;
                     }
 
-                    this.formItem.registerCode = this.current.registerCode;
-                    this.$http.post(this.$url.CLOSE_INCIDENT, this.formItem).then((data) => {
+                    this.$http.post(this.$url.CLOSE_INCIDENT, Object.assign({
+                        eventIds: [this.current.eventId],
+                        closer: this.$store.state.user.userId
+                    }, this.formItem)).then((data) => {
                         this.modal = false;
                         this.$Message.success('关闭成功');
                         this.goPage(this.page);//刷新当前页

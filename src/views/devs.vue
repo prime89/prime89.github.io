@@ -230,9 +230,10 @@
                     operator: '',
 
                 }).then((response) => {
-                    this.data = response.data.data || [];
+                    const data = response.data.data;
+                    this.data = data.deviceList || [];
                     //TODO 分页
-                    this.total = response.data.total || 100;
+                    this.total = data.total || 0;
                 }).catch((err) => {
                 });
             },

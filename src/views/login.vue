@@ -3,17 +3,17 @@
     <div class="login-panel">
             <Form :model="formItem" :label-width="80" ref="loginForm" :rules="ruleValidation">
                 <div class="login-title"><span>电梯动态监测系统</span></div>
-                <FormItem prop="username">
-                    <Input size="large" v-model="formItem.username" prefix="ios-person" placeholder="用户名" style="width: 400px" />
+                <FormItem prop="userName">
+                    <Input size="large" v-model="formItem.userName" prefix="ios-person" placeholder="用户名" style="width: 400px" />
                 </FormItem>
-                <FormItem prop="password">
-                    <Input type="password" size="large" v-model="formItem.password" prefix="ios-lock" placeholder="密码" style="width: 400px" />
+                <FormItem prop="passWord">
+                    <Input type="password" size="large" v-model="formItem.passWord" prefix="ios-lock" placeholder="密码" style="width: 400px" />
                 </FormItem>
-                <FormItem prop="code">
-                    <Input size="large" v-model="formItem.code" prefix="ios-keypad" placeholder="验证码" style="width: 400px" >
+                <FormItem prop="validateCode">
+                    <Input size="large" v-model="formItem.validateCode" prefix="ios-keypad" placeholder="验证码" style="width: 400px" >
                         
                     </Input>
-                    <img class="code" :src="codeUrl" alt="">
+                    <img class="code" :src="codeUrl" alt="" @click="getCode">
                 </FormItem>
                 
                 <FormItem>
@@ -43,24 +43,24 @@
         data () {
             return {
                 role: '超级管理员',
-                codeUrl: '/auth-web/setuser/validate?'+new Date().getTime(),
+                codeUrl: '',
                 formItem: { 
-                    username: '',
-                    password: '',
-                    code: '',
+                    userName: '',
+                    passWord: '',
+                    validateCode: '',
                 },
                 ruleValidation: {
-                    username: [{
+                    userName: [{
                         required: true,
                         message: '请输入用户名',
                         trigger: 'blur' 
                     }],
-                    password: [{
+                    passWord: [{
                         required: true,
                         message: '请输入密码',
                         trigger: 'blur' 
                     }],
-                    code: [{
+                    validateCode: [{
                         required: true,
                         message: '请输入验证码',
                         trigger: 'blur' 
@@ -87,7 +87,8 @@
         methods: {
             getCode () {
                 this.$http.post(this.$url.CODE).then(response => {
-                    this.codeUrl = response.data.validation_1 + response.data.validation_2;
+                    const data = response.data.data;
+                    this.codeUrl = data.validation_1 + data.validation_2;
                 });
             },
             login () {
@@ -97,7 +98,17 @@
                     }
 
                     this.$http.post(this.$url.LOGIN, this.formItem).then((response) => {
-                        this.loginPost(response);
+                        //this.loginPost(response);
+                        this.loginPost({
+                            data: {
+                                userName: '章三',
+                                sys_role_name: '超级管理员',
+                                pdstatus: true,
+                                province: '广东省',
+                                city: '深圳市',
+                                area: '南山区',
+                            }
+                        });
                     }, () => {
                         this.loginPost({
                             userName: '章三',
@@ -186,8 +197,10 @@
 }
 .code {
     position: absolute;
-    right: 100px;
+    cursor: pointer;
+    right: 81px;
     width: 100px;
-    height: 36px;
+    height: 34px;
+    top: 1px;
 }
 </style>

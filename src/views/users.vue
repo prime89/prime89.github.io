@@ -14,7 +14,7 @@
 
         <div class="main-content">
             <Table stripe :columns="columns" :data="data" style="margin-bottom:20px;"></Table>
-            <Page :total="100" page-size="pageSize"
+            <Page :total="total" :page-size="pageSize"
             @on-page-size-change="changePageSize"
             @change="goPage"
             show-sizer />
@@ -67,8 +67,10 @@
                 modifyModal: false,
                 deleteModal: false,
                 resetModal: false,
+                current: null,
                 pageSize: 10,
                 pageNo: 1,
+                total: 0,
                 search: {
                     regCode: '',
                     installer: '',
@@ -90,15 +92,15 @@
                 columns: [
                     {
                         title: '用户名',
-                        key: 'username'
+                        key: 'REALNAME'
                     },
                     {
                         title: '角色',
-                        key: 'role'
+                        key: 'roleName'
                     },
                     {
                         title: '联系方式',
-                        key: 'tel'
+                        key: 'TELEPHONE'
                     },
                     {
                         title: '操作',
@@ -154,17 +156,21 @@
                     telephone: '',
                     num: String(pageNo),
                 }).then(((response) => {
-                    this.data = response.data.data || [];
-                    this.total = response.data.total || 0;
+                    const data = response.data.data;
+                    this.data =  data.userList || [];
+                    this.total = data.total || 0;
                 }).bind(this));
             },
-            openResetModal () {
+            openResetModal (data) {
+                this.current  = data;
                 this.resetModal = true;
             },
-            openModifyModal () {
+            openModifyModal (data) {
+                this.current = data;
                 this.modifyModal = true;
             },
-            openDeleteModal () {
+            openDeleteModal (data) {
+                this.current = data;
                 this.deleteModal = true;
             },
             resetPasswd () {
@@ -173,7 +179,9 @@
                 }).bind(this));
             },
             deleteUser () {
-                this.$http.post(this.$url.DELETE_USER).then((() => {
+                this.$http.post(this.$url.DELETE_USER, {
+                    userName: this.current.USERNAME,
+                }).then((() => {
                     this.$Message.success('删除成功');
                     this.getUsers();
                 }).bind(this));

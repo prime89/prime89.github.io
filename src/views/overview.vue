@@ -1,7 +1,7 @@
 <template>
     <HeaderMenu>
         <div class="map-container">
-        <div id="allmap"></div>
+        <div id="map"></div>
         <div class="type-cells">
             <CellGroup @on-click="select">
                 <Cell :name="key" :title="group.name" :key="key" :selected="group.selected" v-for="(group, key) in types"/>
@@ -115,40 +115,33 @@
             fullScreen: mutations.fullScreen,
             shrink: mutations.shrink,
             initMap () {
-                const self = this;
-                var map = this.map = new BMap.Map("allmap");    // 创建Map实例
-                map.centerAndZoom('深圳市罗湖区', 14);  // 初始化地图,设置中心点坐标和地图级别  new BMap.Point(114.07, 22.63)
-                //添加地图类型控件
-                map.addControl(new BMap.MapTypeControl({
-                    mapTypes:[
-                        BMAP_NORMAL_MAP,
-                        BMAP_HYBRID_MAP
-                    ]}));	  
-                map.setMapStyle({style: 'midnight'});
-                map.setCurrentCity("深圳市");          // 设置地图显示的城市 此项是必须设置的
-                map.enableScrollWheelZoom(true);     //开启鼠标滚轮缩放
+                var map = new AMap.Map('map',{
+                    zoom: 10,  //设置地图显示的缩放级别
+                    center: [116.397428, 39.90923],//设置地图中心点坐标
+                    mapStyle: 'amap://styles/grey',  //设置地图的显示样式
+                    viewMode: '2D',  //设置地图模式
+                    lang:'zh_cn',  //设置地图语言类型
+                });
 
-                map.enableScrollWheelZoom();                        //启用滚轮放大缩小
-                if (document.createElement('canvas').getContext) {  // 判断当前浏览器是否支持绘制海量点
-                    var points = [];  // 添加海量点数据
-                    for (var i = 0; i < data.data.length; i++) {
-                        const p = new BMap.Point(data.data[i][0], data.data[i][1]);
-                        p.data = {hello: 'world'};
-                        points.push(p);
+                var opts = {
+                    subdistrict: 1,   //返回下一级行政区
+                    showbiz:false  //最后一级返回街道信息
+                };
+                const district = new AMap.DistrictSearch(opts);
+
+                district.search('深圳市', function(status, result) {
+                    if(status === 'complete'){
+                        map.setCenter(result.districtList[0].center);
+
+                        var layer = Loca.visualLayer({
+                            container: map,
+                            // 指定数据类型
+                            type: 'point',
+                            // 展示形状
+                            shape: 'circle'
+                        });
                     }
-                    var options = {
-                        size: BMAP_POINT_SIZE_BIG,
-                        shape: BMAP_POINT_SHAPE_CIRCLE,
-                        color: '#d340c3',
-                    }
-                    var pointCollection = new BMap.PointCollection(points, options);  // 初始化PointCollection
-                    pointCollection.addEventListener('click', ((e) => {
-                        this.viewDetail(e.point);
-                    }).bind(this));
-                    map.addOverlay(pointCollection);  // 添加Overlay
-                } else {
-                    alert('请在chrome、safari、IE8+以上浏览器查看本示例');
-                }
+                });
             },
             viewDetail (point) {
                 console.log(point);
@@ -192,7 +185,7 @@
         height: 100%;
         position: relative;
     }
-    #allmap{
+    #map{
         height: 100%;
     }
     .type-cells{

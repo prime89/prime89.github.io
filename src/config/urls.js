@@ -6,7 +6,7 @@ export default {
     USERLIST: '/setuser/selectUser',
     RESET_USER_PASSWD: '/setuser/user2',
     MODIFY_USER: '/users/ss',
-    DELETE_USER: '/user/delete',
+    DELETE_USER: '/setuser/delete',
 
     //devs
     DEVLIST: '/device/deviceList',
@@ -20,7 +20,7 @@ export default {
 
     //incidents
     INCIDENTLIST: '/eventInfo/queryEventList',
-    CLOSE_INCIDENT: '/incidents',
+    CLOSE_INCIDENT: '/eventInfo/closeEvent',
 
     //report
     REPORT_BRAND_DATA: '/report/brandRatio',
