@@ -63,8 +63,11 @@
                 //TODO
                 this.$refs[name].validate((valid) => {
                     if (valid) {
-                        this.$store.dispatch('resetPasswd', {password: this.formItem.password}).then((data) => {
-                            if (data.code === 0) {
+                        this.$store.dispatch('resetPasswd', {
+                            username: this.$store.state.user.username,
+                            password: this.formItem.password
+                        }).then((data) => {
+                            if (data.code == 0) {
                                 this.$router.push({
                                     path: '/overview',
                                 });

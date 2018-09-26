@@ -20,14 +20,14 @@
                     <Checkbox v-model="rememberMe" style="color:#fff">记住密码</Checkbox>
                 </FormItem>
 
-                <FormItem>
+                <!-- <FormItem>
                     <RadioGroup v-model="role" style="color:#fff">
                         <Radio label="超级管理员"></Radio>
                         <Radio label="管理员"></Radio>
                         <Radio label="质监局"></Radio>
                         <Radio label="监控中心"></Radio>
                     </RadioGroup>
-                </FormItem>
+                </FormItem> -->
                 
                 <FormItem>
                      <Button @click="login" type="info" style="width: 400px;">登陆</Button>
@@ -97,18 +97,13 @@
                         return;
                     }
 
-                    this.$http.post(this.$url.LOGIN, this.formItem).then((response) => {
-                        //this.loginPost(response);
-                        this.loginPost({
-                            data: {
-                                userName: '章三',
-                                sys_role_name: '超级管理员',
-                                pdstatus: true,
-                                province: '广东省',
-                                city: '深圳市',
-                                area: '南山区',
-                            }
-                        });
+                    const formData = new FormData();
+                    formData.append('userName', this.formItem.userName);
+                    formData.append('passWord', this.formItem.passWord);
+                    formData.append('validateCode', this.formItem.validateCode);
+                    this.$http.post(this.$url.LOGIN, formData).then((response) => {
+                        this.loginPost(response);
+                        
                     }, () => {
                         this.loginPost({
                             userName: '章三',
@@ -116,16 +111,6 @@
                             pdstatus: true,
                         });
                     }).catch(() => {
-                        this.loginPost({
-                            data: {
-                                userName: '章三',
-                                sys_role_name: '超级管理员',
-                                pdstatus: true,
-                                province: '广东省',
-                                city: '深圳市',
-                                area: '南山区',
-                            }
-                        });
                         console.log('login error');
                     });
                     
@@ -133,10 +118,15 @@
             },
             loginPost (response) {
                 //set user role
+                const data = response.data.data;
                 const userinfo = {
-                    username: response.data.userName,
-                    role: this.role || response.data.sys_role_name,
-                    passwdResetted: !!response.data.pdstatus,
+                    id: data.userId,
+                    username: data.userName,
+                    role: data.sys_role_name,
+                    passwdResetted: data.pdstatus != 0,
+                    province: data.province || '',
+                    city: data.city || '',
+                    area: data.area || '',
                 };
                 this.$store.commit('setUser', userinfo);
                 localStorage.setItem('loginUser', JSON.stringify(userinfo));

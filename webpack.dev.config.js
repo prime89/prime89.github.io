@@ -37,7 +37,23 @@ module.exports = merge(webpackBaseConfig, {
             '/auth-web': {
               target: 'http://193.112.97.65:28080',
               //pathRewrite: {'^/auth': '/web-auth'},
-              secure: false
+              secure: false,
+              onProxyRes: function(proxyRes, req, res) {
+                var cookies = proxyRes.headers['set-cookie'];
+                var cookieRegex = /Path=\/auth-web/i;
+                //修改cookie Path
+                if (cookies) {
+                  var newCookie = cookies.map(function(cookie) {
+                    if (cookieRegex.test(cookie)) {
+                      return cookie.replace(cookieRegex, 'Path=/');
+                    }
+                    return cookie;
+                  });
+                  //修改cookie path
+                  delete proxyRes.headers['set-cookie'];
+                  proxyRes.headers['set-cookie'] = newCookie;
+                }
+              }          
             }
         }
     }

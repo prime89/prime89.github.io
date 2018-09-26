@@ -50,7 +50,6 @@
                 user: {
                     username: '',
                 },
-                location: '深圳市南山区',
             }
         },
         mounted () {
@@ -58,6 +57,18 @@
 
         },
         computed: {
+            location () {
+                const location = [];
+                const city = this.$store.state.user.city;
+                const area = this.$store.state.user.area;
+                if (city) {
+                    location.push(city);
+                }
+                if (area) {
+                    location.push(area);
+                }
+                return location.join('');
+            },
             menus () {
                 const role = this.$store.state.role; 
                 const pages = permission.pages.filter(page => {

@@ -2,25 +2,24 @@
     <HeaderMenu>
         <Form ref="formInline" :model="search" inline label-position="left" :label-width="70" class="search-bar">
             <FormItem label="时间范围">
-                <DatePicker type="daterange" :value="search.time" split-panels placeholder="Select date" style="width: 200px"></DatePicker>
+                <DatePicker format="yyyy-MM-dd HH:mm:ss" type="datetimerange" v-model="search.time" split-panels placeholder="选择时间" style="width: 300px"></DatePicker>
             </FormItem>
             <FormItem label="事件名称">
-                <Select v-model="search.level" style="width:200px">
-                    <Option value="info" key="11">info</Option>
-                </Select>
+                <Input type="text" v-model="search.eventName" style="width: 200px;"></Input>
             </FormItem>
             <FormItem label="事件级别">
-                <Select v-model="search.level" style="width:200px">
-                    <Option value="info" key="11">info</Option>
+                <Select v-model="search.eventLevel" style="width:200px">
+                    <Option value="" key="">全部</Option>
+                    <Option value="1" key="1">一般</Option>
+                    <Option value="2" key="2">异常</Option>
+                    <Option value="3" key="3">严重</Option>
                 </Select>
             </FormItem>
             <FormItem label="电梯注册码" :label-width="80">
-                <Select v-model="search.level"  style="width:200px">
-                    <Option value="info" key="11">info</Option>
-                </Select>
+                <Input type="text" v-model="search.registerCode" style="width: 200px;"></Input>                
             </FormItem>
             <FormItem label="区域">
-                <Cascader :data="data" v-model="search.zone" style="width: 300px;"></Cascader>
+                <Cascader :data="provinceData" v-model="search.zone" style="width: 300px;"></Cascader>
             </FormItem>
             <FormItem>
                 <Button type="primary" @click="goPage(1)">查询</Button>
@@ -56,16 +55,21 @@
 </template>
 <script>
     import HeaderMenu from '../components/common/headerMenu.vue';
+    import provinceData from '../libs/province';
+   
     export default {
         data () {
+            const levelMap = ['', '一般', '异常', '故障']
             return {
                 page: 1,
                 pageSize: 10,
                 total: 0,
                 modal: false,
+                provinceData: provinceData,
                 search: {
-                    time: '',
-                    level: '',
+                    time: [],
+                    eventLevel: '',
+                    registerCode: '',
                     zone: [],
                 },
                 formItem: {
@@ -78,53 +82,6 @@
                     ]
                 },
                 current: {},
-                address: [{
-                    value: 'beijing',
-                    label: '北京',
-                    children: [
-                        {
-                            value: 'gugong',
-                            label: '故宫'
-                        },
-                        {
-                            value: 'tiantan',
-                            label: '天坛'
-                        },
-                        {
-                            value: 'wangfujing',
-                            label: '王府井'
-                        }
-                    ]
-                }, {
-                    value: 'jiangsu',
-                    label: '江苏',
-                    children: [
-                        {
-                            value: 'nanjing',
-                            label: '南京',
-                            children: [
-                                {
-                                    value: 'fuzimiao',
-                                    label: '夫子庙',
-                                }
-                            ]
-                        },
-                        {
-                            value: 'suzhou',
-                            label: '苏州',
-                            children: [
-                                {
-                                    value: 'zhuozhengyuan',
-                                    label: '拙政园',
-                                },
-                                {
-                                    value: 'shizilin',
-                                    label: '狮子林',
-                                }
-                            ]
-                        }
-                    ],
-                }],
                 columns: [
                     {
                         title: '时间',
@@ -136,7 +93,16 @@
                     },
                     {
                         title: '事件级别',
-                        key: 'eventName'
+                        key: 'eventLevel',
+                        render (h, params) {
+                            const l = params.row.eventLevel;
+                            return h('div', {
+                                class: {
+                                    'level-info' : true, 
+                                    ['level-' + l]: true,
+                                }
+                            }, levelMap[l]);
+                        },
                     },
                     {
                         title: '电梯注册码',
@@ -157,7 +123,7 @@
                     {
                         title: '是否关闭',
                         key: 'eventStatus',
-                        render: (h, params) => {console.log(params);
+                        render: (h, params) => {
                             return h('div', {
                                 class: {
                                     'close-info' : true, 
@@ -205,16 +171,24 @@
             },
             goPage (page) { 
                 this.page = page;
-                this.$http.post(this.$url.INCIDENTLIST, {
-                    registerCode: '',
-                    eventName: '',
-                    eventLevel: '',
-                    elvProvince: '',
-                    elvCity: '',
-                    elvArea: '',
+                const postData = {
+                    registerCode: this.search.registerCode || '',
+                    eventName: this.search.eventName || '',
+                    eventLevel: this.search.eventLevel || '',
+                    elvProvince: this.search.zone[0] || '',
+                    elvCity: this.search.zone[1] || '',
+                    elvArea: this.search.zone[2] || '',
                     pageSize: this.pageSize,
-                    pageNo: 1,
-                }).then((response) => {
+                    pageNo: page,
+                }
+                if (this.search.time[0]) {
+                    postData.startTime = this.search.time[0];
+                }
+                if (this.search.time[1]) {
+                    postData.endTime = this.search.time[1];
+                }
+
+                this.$http.post(this.$url.INCIDENTLIST, postData).then((response) => {
                     const data = response.data.data;
                     this.data =  data.eventInfoList || [];
                     //TODO 分页
@@ -237,7 +211,7 @@
 
                     this.$http.post(this.$url.CLOSE_INCIDENT, Object.assign({
                         eventIds: [this.current.eventId],
-                        closer: this.$store.state.user.userId
+                        closer: this.$store.state.user.id
                     }, this.formItem)).then((data) => {
                         this.modal = false;
                         this.$Message.success('关闭成功');

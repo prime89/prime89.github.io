@@ -44,8 +44,11 @@ const mutations = {
 };
 
 const actions = {
-    resetPasswd ({commit, state}, {}) {
-        return axios.post(urls.RESET_PASSWORD, {}).then((response) => {
+    resetPasswd ({commit, state}, {username, password}) {
+        return axios.post(urls.RESET_PASSWORD, {
+            userName: username,
+            passWord: password,
+        }).then((response) => {
             commit('resetPasswd', true);
             return response.data;
         });

@@ -77,12 +77,12 @@
             fullScreen: mutations.fullScreen,
             shrink: mutations.shrink,
             getBrandData() {
-                this.$http.post(this.$url.REPORT_BRAND_DATA, {userId: 1}).then((response) => {
+                this.$http.post(this.$url.REPORT_BRAND_DATA, {userId: this.$store.state.user.id}).then((response) => {
                     this.initBrandChart(response.data.data);
                 });
             },
             getStatusData() {
-                this.$http.post(this.$url.REPORT_STATUS_DATA, {userId: 1, period: this.period}).then((response) => {
+                this.$http.post(this.$url.REPORT_STATUS_DATA, {userId: this.$store.state.user.id, period: this.period}).then((response) => {
                     this.initStatusChart(response.data.data);
                 }).catch((data) => {console.log(1);
                     this.initStatusChart( [
@@ -110,7 +110,7 @@
                 });
             },
             getBadData() {
-                this.$http.post(this.$url.REPORT_BAD_DATA, {userId: 1}).then((response) => {
+                this.$http.post(this.$url.REPORT_BAD_DATA, {userId: this.$store.state.user.id}).then((response) => {
                     this.initBadChart(response.data.data); 
                 });
             },
@@ -171,13 +171,17 @@
                 chart.setOption(option);
             },
             initStatusChart (data) {
+                let reportData = data.dataInfoList || [];
+                if (data.userLevel == 2) {
+                    reportData = [];
+                }
                 const areas = {};
                 const eventMap = {
                     1: 'normal',
                     2: 'exception',
                     3: 'accident',
                 };
-                (data || []).forEach(d => {
+                reportData.forEach(d => {
                     if (!areas[d.elv_area]) {
                         areas[d.elv_area] = {
                             'normal': 0,

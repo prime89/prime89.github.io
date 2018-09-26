@@ -2,10 +2,10 @@
     <HeaderMenu>
         <Form ref="formInline" label-position="right" :model="search" inline :label-width="70" class="search-bar">
             <FormItem label="用户名" :label-width="80">
-                <Input type="text" v-model="search.regCode"></Input>
+                <Input type="text" v-model="search.userName"></Input>
             </FormItem>
             <FormItem label="联系方式">
-                <Input type="text" v-model="search.installer"></Input>
+                <Input type="text" v-model="search.telephone"></Input>
             </FormItem>
             <FormItem>
                 <Button type="primary" :loading="isSearching" @click="goPage(1)">查询</Button>
@@ -15,8 +15,9 @@
         <div class="main-content">
             <Table stripe :columns="columns" :data="data" style="margin-bottom:20px;"></Table>
             <Page :total="total" :page-size="pageSize"
+            :current="pageNo"
             @on-page-size-change="changePageSize"
-            @change="goPage"
+            @on-change="goPage"
             show-sizer />
         </div>
 
@@ -42,12 +43,31 @@
             v-model="modifyModal"
             title="修改用户"
             >
-            <Form ref="formItem" :model="formItem" :label-width="80" :rules="ruleValidate">
+            <Form ref="formItem" :model="formItem" :label-width="100">
                 <FormItem label="用户名" prop="username">
-                    <Input size="large" v-model="formItem.username" placeholder="请输入用户名" style="width: 400px" />
+                    <Input size="large" v-model="formItem.USERNAME" placeholder="请输入用户名" style="width: 300px" />
+                </FormItem>
+                <FormItem label="真实姓名" prop="realName">
+                    <Input size="large" v-model="formItem.REALNAME" placeholder="请输入真实姓名" style="width: 300px" />
+                </FormItem>
+                <FormItem label="地区" prop="zone">
+                    <Cascader :data="provinceData" v-model="formItem.zone" style="width: 300px;"></Cascader>
+                </FormItem>
+                <FormItem label="性别" prop="gender">
+                    <Select v-model="formItem.GENDER" style="width:300px">
+                        <Option value="男" key="男">男</Option>
+                        <Option value="女" key="女">女</Option>
+                    </Select>
+                </FormItem>
+                <FormItem label="区域级别" prop="level">
+                    <Select v-model="formItem.LEVEL" style="width:300px">
+                        <Option value="1" key="1">省级</Option>
+                        <Option value="2" key="2">市级</Option>
+                        <Option value="3" key="3">区县级</Option>
+                    </Select>
                 </FormItem>
                 <FormItem label="联系方式" prop="telephone">
-                    <Input size="large" v-model="formItem.telephone" placeholder="联系方式" style="width: 400px" />
+                    <Input size="large" v-model="formItem.TELEPHONE" placeholder="联系方式" style="width: 300px" />
                 </FormItem>
             </Form>
 
@@ -60,6 +80,8 @@
 </template>
 <script>
     import HeaderMenu from '../components/common/headerMenu.vue';
+    import provinceData from '../libs/province';
+
     export default {
         data () {
             return {
@@ -68,31 +90,33 @@
                 deleteModal: false,
                 resetModal: false,
                 current: null,
+                provinceData: provinceData,
                 pageSize: 10,
                 pageNo: 1,
                 total: 0,
                 search: {
-                    regCode: '',
-                    installer: '',
-                    address: '',
-                    status: 'all',
+                    userName: '',
+                    telephone: '',
                 },
                 formItem: {
                     username: '',
                     telephone: '',
+                    zone: [],
+                    gender: '',
+                    level: '',
                 },
-                ruleValidate: {
-                    username: [
-                        { required: true, message: '请输入用户名', trigger: 'blur' }
-                    ],
-                    telephone: [
-                        { required: true, message: '请输入联系方式', trigger: 'blur' }
-                    ],
-                },
+                // ruleValidate: {
+                //     username: [
+                //         { required: true, message: '请输入用户名', trigger: 'blur' }
+                //     ],
+                //     telephone: [
+                //         { required: true, message: '请输入联系方式', trigger: 'blur' }
+                //     ],
+                // },
                 columns: [
                     {
                         title: '用户名',
-                        key: 'REALNAME'
+                        key: 'USERNAME'
                     },
                     {
                         title: '角色',
@@ -150,11 +174,13 @@
                 this.pageSize = size;
                 this.goPage(1);
             },
-            goPage (pageNo) {
+            goPage (pageNo) {console.log(pageNo);
+                this.pageNo = pageNo || this.pageNo;
                 this.$http.post(this.$url.USERLIST, {
-                    userName: '',
-                    telephone: '',
-                    num: String(pageNo),
+                    userName: this.search.userName,
+                    telephone: this.search.telephone,
+                    pageSize: this.pageSize,
+                    pageNo: this.pageNo,
                 }).then(((response) => {
                     const data = response.data.data;
                     this.data =  data.userList || [];
@@ -167,6 +193,7 @@
             },
             openModifyModal (data) {
                 this.current = data;
+                this.formItem = Object.assign({}, data);
                 this.modifyModal = true;
             },
             openDeleteModal (data) {
@@ -174,7 +201,9 @@
                 this.deleteModal = true;
             },
             resetPasswd () {
-                this.$http.post(this.$url.RESET_USER_PASSWD).then(((data) => {
+                this.$http.post(this.$url.RESET_USER_PASSWD, {
+                    userName: this.current.userName
+                }).then(((data) => {
                     this.$Message.success('重置密码成功');
                 }).bind(this));
             },
@@ -189,9 +218,19 @@
             modifyUser () {
                 this.$refs['formItem'].validate((valid) => {
                     if (valid) {
-                        this.$http.post(this.$url.MODIFY_USER).then((() => {
+                        this.$http.post(this.$url.MODIFY_USER, {
+                            id: this.formItem.userId,
+                            userName: this.formItem.USERNAME,
+                            realName: this.formItem.REALNAME,
+                            province: this.formItem.zone[0],
+                            city: this.formItem.zone[1],
+                            area: this.formItem.zone[2],
+                            gender: this.formItem.GENDER,
+                            telephone: this.formItem.TELEPHONE,
+                            level: this.formItem.LEVEL,
+                        }).then((() => {
                             this.modifyModal = false;
-                            this.getUsers();
+                            this.goPage(1);
                             this.$Message.success('修改成功');
                         }).bind(this));
                     }

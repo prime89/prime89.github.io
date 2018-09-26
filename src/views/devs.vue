@@ -14,21 +14,24 @@
                 <Input type="text" v-model="search.registerCode"></Input>
             </FormItem>
             <FormItem label="状态">
-                <Select v-model="search.status" style="width:200px">
-                    <Option value="all" key="all">全部</Option>
-                    <Option value="online" key="1">在线</Option>
-                    <Option value="offline" key="0">离线</Option>
+                <Select v-model="search.onlineStatus" style="width:200px">
+                    <Option value="" key="">全部</Option>
+                    <Option value="1" key="1">在线</Option>
+                    <Option value="0" key="0">离线</Option>
                 </Select>
             </FormItem>
             <FormItem>
-                <Button type="primary" :loading="isSearching" @click="goPage">查询</Button>
+                <Button type="primary" :loading="isSearching" @click="goPage(1)">查询</Button>
+                <!-- <Button type="ghost" @click="resetSearch()">重置</Button> -->
             </FormItem>
         </Form>
 
         <div class="main-content">
             <Button style="margin-bottom: 20px;" @click="openAttachModal">新增设备</Button>
             <Table stripe :columns="columns" :data="data"></Table>
-            <Page :current="page" :total="total" @on-change="goPage" show-sizer />
+            <Page :current="page" :total="total" @on-change="goPage" 
+            @on-page-size-change="changePageSize"
+            show-sizer />
         </div>
 
         <Modal
@@ -112,6 +115,7 @@
                 },
                 total: 0,
                 page: 1,
+                pageSize: 10,
                 columns: [
                     {
                         title: '设备SN码',
@@ -126,7 +130,7 @@
                         key: 'onlineStatus',
                         render (h, params) {
                             return h('span', 
-                                params.row.onlineStatus? '在线': '离线'
+                                params.row.onlineStatus == 1? '在线': '离线'
                             );
                         }
                     },
@@ -183,9 +187,9 @@
             setStations () {
                 this.stations = {};
                 const toStation = this.toStation || 1;
-                for(let i=this.fromStation;i<=toStation;i++) {
+                for(let i=this.fromStation, ii=0;i<=toStation;i++) {
                     if (i === 0) {continue;}
-                    this.stations[i] = String(i);
+                    this.stations[ii++] = String(i);
                 }
             },
             changeStation(e, index) {
@@ -217,17 +221,23 @@
                     this.checkAll = false;
                 }
             },
+            changePageSize(pageSize) {
+                this.pageSize = pageSize;
+                this.goPage(1);
+            },
             goPage (page) { 
                 this.page = page || this.page;
                 this.getDevs();
             },
             getDevs () {
                 this.$http.post(this.$url.DEVLIST, {
-                    registerCode: '',
-                    deviceSNCode: '',
-                    onlineStatus: '',
-                    elv_Address: '',
-                    operator: '',
+                    registerCode: this.search.registerCode,
+                    deviceSNCode: this.search.deviceSNCode,
+                    onlineStatus: this.search.onlineStatus,
+                    elv_Address: this.search.elv_Address,
+                    operator: this.search.operator,
+                    pageSize: this.pageSize,
+                    pageNo: this.page,
 
                 }).then((response) => {
                     const data = response.data.data;
@@ -254,7 +264,7 @@
                 });
 
                 this.$http.post(this.$url.DEV_BIND, Object.assign({
-                    userId: this.$store.state.user.id||1,
+                    userId: this.$store.state.user.id,
                     stations: JSON.stringify(arr),
                 }, this.formItem)).then((data) => {
                     this.$Message.success('绑定成功');
@@ -272,6 +282,9 @@
             },
             cancel() {
                 this.attachModal = false;
+            },
+            resetSearch() {console.log(11);
+                this.$refs.formInline.resetFields();
             }
         },
         components: {

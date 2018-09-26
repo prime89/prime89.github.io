@@ -45,6 +45,10 @@ html, body {
     float:left;
     width: 120px;
 }
+.info-line dd{
+    white-space: normal;
+    margin-left: 120px;
+}
 .info-line dt, .info-line dd{
     display:block;
     font-size: 14px;
@@ -55,7 +59,7 @@ html, body {
     -moz-font-feature-settings: "kern";
     -moz-font-feature-settings: "kern=1";
     font-kerning: normal;
-    white-space: nowrap;
+    white-space: normal;
 }
 .info-line dt:after{
     content: '：'
@@ -65,7 +69,7 @@ html, body {
     background: #eee;
 }
 .search-bar .ivu-form-item{
-    margin: 12px 0;
+    margin: 12px 5px;
 }
 .search-opened .ivu-form-item-label {
     color: #fff;

@@ -26,6 +26,7 @@
         <div class="main-content">
             <div class="view-frame" :style="viewFrameStyle">
                 <div class="view"
+                @click="viewDetail(item)"
                 :class="{
                     'up': item.runningState.running == 1,
                     'stop': item.runningState.running == 0,
@@ -113,6 +114,11 @@
             }
         },
         methods: {
+            viewDetail(item) {
+                this.$router.push({
+                    path: '/elevators/' + item.registerCode
+                });
+            },
             ledCls(floor) {
                 const arr = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
                 const cls = {};

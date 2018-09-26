@@ -38,7 +38,7 @@ export default {
         height: 0;
         border: 2px solid transparent;
     }
-    .led .d1{			height:2px;width:5px;top:0;left:2px;}
+    .led .d1{			height:2px;width:4px;top:0;left:2px;}
     .led .d1:before{	border-width:0 2px 2px 0;border-right-color:inherit;left:-2px;}
     .led .d1:after{	border-width:0 0 2px 2px;border-left-color:inherit;right:-2px;}
 
@@ -46,7 +46,7 @@ export default {
     .led .d2:before{	border-width:1px 2px 1px;border-right-color:inherit;left:-4px;}
     .led .d2:after{	border-width:1px 2px 1px;border-left-color:inherit;right:-3px;}
 
-    .led .d3{			height:2px;width:5px;top:14px;left:2px;}
+    .led .d3{			height:2px;width:4px;top:14px;left:2px;}
     .led .d3:before{	border-width:2px 2px 0 0;border-right-color:inherit;left:-2px;}
     .led .d3:after{	border-width:2px 0 0 2px;border-left-color:inherit;right:-2px;}
 

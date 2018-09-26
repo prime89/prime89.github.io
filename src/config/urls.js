@@ -2,10 +2,10 @@ export default {
     CODE: '/setuser/validate',
     LOGIN: '/setuser/login',
     LOGOUT: '/logout',
-    RESET_PASSWORD: '/resetPasswd',
+    RESET_PASSWORD: '/setuser/changePD',
     USERLIST: '/setuser/selectUser',
-    RESET_USER_PASSWD: '/setuser/user2',
-    MODIFY_USER: '/users/ss',
+    RESET_USER_PASSWD: '/setuser/reSetPD',
+    MODIFY_USER: '/setuser/updateUser',
     DELETE_USER: '/setuser/delete',
 
     //devs

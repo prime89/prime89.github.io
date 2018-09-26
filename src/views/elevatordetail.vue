@@ -3,12 +3,61 @@
     <div class="main-content">
         <Breadcrumb>
             <BreadcrumbItem to="/">电梯总览</BreadcrumbItem>
-            <BreadcrumbItem>详情</BreadcrumbItem>
+            <BreadcrumbItem>{{elvAddress}}</BreadcrumbItem>
         </Breadcrumb>
        <EleTabs></EleTabs>
 
        <div>
-           <Table :columns="columns" :data="baseInfo"></Table>
+           <Row class="event-header">
+               <Col span="3">
+               电梯注册码
+               </Col>
+                <Col span="3">
+               最近事件
+               </Col>
+                <Col span="3">
+               事件级别
+               </Col>
+                <Col span="3">
+               是否故障
+               </Col>
+                <Col span="3">
+               发生时间
+               </Col>
+                <Col span="3">
+               当前楼层
+               </Col>
+                <Col span="6">
+               运行状态
+               </Col>
+           </Row>
+            <Row class="event-info">
+               <Col span="3">
+               {{registerCode}}
+               </Col>
+                <Col span="3">
+               {{eventName}}
+               </Col>
+                <Col span="3">
+               {{
+                   formatEventLevel(eventLevel)
+               }}
+               </Col>
+                <Col span="3">
+               {{
+                   eventLevel==3?'是':'否'
+               }}
+               </Col>
+                <Col span="3">
+               {{eventTime}}
+               </Col>
+                <Col span="3">
+               {{elvFloor}}
+               </Col>
+                <Col span="6">
+               xx
+               </Col>
+           </Row>
 
            <Row class="elevator-info">
                 <Col span="12">
@@ -103,6 +152,13 @@
                 elvMpersonnelTel: '',
                 longitude: '',
                 latitude: '',
+
+                "eventId": "",
+                "eventName": "",
+                "eventLevel": "",
+                "eventTime": "",
+                "eventStatus": "",
+                "deviceSnCode": "",
             };
         },
         mounted() {
@@ -112,9 +168,15 @@
             this.ws && this.ws.close();
         },
         methods: {
+            formatEventLevel(level) {
+                const maps = ['', '一般', '异常', '故障'];
+                return maps[level] || '';
+            },
             init() {
-                this.$http.get(this.$url.ELEVATOR_DETAIL).then((response) => {
-                    const data = response.data.data;
+                this.$http.post(this.$url.ELEVATOR_DETAIL, {
+                    registerCode: this.$route.params.id
+                }).then((response) => {
+                    const data = (response.data.data || []).eleInfo;
                     this.registerCode = data.registerCode;
                     this.elvAddress = data.elvAddress;
                     this.elvBrand=data.elvBrand ;
@@ -122,7 +184,7 @@
                     this.ppxh= data.ppxh;
                     this.elvFloor= data.elvFloor;
                     this.elvStation= data.elvStation;
-                    this.elvRatedload= tdatahis.elvRatedload;
+                    this.elvRatedload= data.elvRatedload;
                     this.elvRatedspeed= data.elvRatedspeed;
                     this.elvPropertyCompany= data.elvPropertyCompany;
                     this.elvPsecurity= data.elvPsecurity;
@@ -134,6 +196,14 @@
                     this.elvMpersonnelTel= data.elvMpersonnelTel;
                     this.longitude= data.longitude;
                     this.latitude= data.latitude;
+
+                    const eventInfo = (response.data.data || []).eventinfo;
+                    this.eventId = eventInfo.eventId;
+                    this.eventName = eventInfo.eventName;
+                    this.eventLevel = eventInfo.eventLevel;
+                    this.eventTime = eventInfo.eventTime;
+                    this.eventStatus = eventInfo.eventStatus;
+                    this.deviceSnCode = eventInfo.deviceSnCode;
                 });
             },
             fetch() {
@@ -187,6 +257,22 @@ h3{
     background: #eee;
     border: 1px solid #eee;
     box-shadow: 0 0 1px 1px #eee;
+}
+
+.event-header div{
+    padding: 10px 0;
+    background: #eee;
+    border: 1px solid #fff;
+    text-align: center;
+}
+.event-info {
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+.event-info div{
+    padding: 10px 0;
+    border: 1px solid #fff;
+    text-align: center;
 }
 
 </style>

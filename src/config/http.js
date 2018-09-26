@@ -14,6 +14,7 @@ if (false) {//use mock data
 }
 
 axios.defaults.baseURL = '/auth-web';
+axios.defaults.withCredentials=true;
 Vue.axios = axios;
 
 //axios.defaults.headers.common['Content-Type'] = 'multipart/form-data';
