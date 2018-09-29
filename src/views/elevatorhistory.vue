@@ -3,7 +3,7 @@
     <div class="main-content">
         <Breadcrumb>
             <BreadcrumbItem to="/">电梯总览</BreadcrumbItem>
-            <BreadcrumbItem>详情</BreadcrumbItem>
+            <BreadcrumbItem>{{elevator.elvAddress}}</BreadcrumbItem>
         </Breadcrumb>
        <EleTabs></EleTabs>
 
@@ -52,6 +52,7 @@
                 pageSize: 20,
                 page: 1,
                 total: 0,
+                elevator: {},
                 columns: [
                     {
                         title: '时间',
@@ -80,8 +81,16 @@
         },
         mounted() {
             this.goPage(1);
+            this.getElevatorInfo();
         },
         methods: {
+            getElevatorInfo() {
+                this.$http.post(this.$url.ELEVATOR_DETAIL, {
+                    registerCode: this.$route.params.id
+                }).then((response) => {
+                    this.elevator = (response.data.data || []).eleInfo || {};
+                });
+            },
             changePageSize(pageSize) {
                 this.pageSize = pageSize;
                 this.goPage(1);
@@ -123,6 +132,9 @@
     }
 </script>
 <style scoped>
+.main-content{
+    padding: 30px;
+}
 h3{
     font-size: 16px;
     margin-bottom: 20px;

@@ -80,6 +80,7 @@
 </template>
 <script>
     import HeaderMenu from '../components/common/headerMenu.vue';
+    import permission from '../config/permission';
     import provinceData from '../libs/province';
 
     export default {
@@ -120,7 +121,10 @@
                     },
                     {
                         title: '角色',
-                        key: 'roleName'
+                        key: 'roleName',
+                        render (h, params) {
+                            return h('span', permission.roles[params.row.roleName]);
+                        },
                     },
                     {
                         title: '联系方式',

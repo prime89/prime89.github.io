@@ -115,7 +115,9 @@
             fullScreen: mutations.fullScreen,
             shrink: mutations.shrink,
             initMap () {
-                var map = new AMap.Map('map',{
+                const self = this;
+                var amap = new AMap.Map('map',{
+                    resizeEnable: true,
                     zoom: 10,  //设置地图显示的缩放级别
                     center: [116.397428, 39.90923],//设置地图中心点坐标
                     mapStyle: 'amap://styles/grey',  //设置地图的显示样式
@@ -124,24 +126,107 @@
                 });
 
                 var opts = {
+                    extensions: 'all',
                     subdistrict: 1,   //返回下一级行政区
                     showbiz:false  //最后一级返回街道信息
                 };
                 const district = new AMap.DistrictSearch(opts);
+                const province = this.$store.state.user.province;
+                const city = this.$store.state.user.city;
+                const area = this.$store.state.user.area;
 
-                district.search('深圳市', function(status, result) {
-                    if(status === 'complete'){
-                        map.setCenter(result.districtList[0].center);
+                let searchs = [], zoom = 4;
+                if (area) {
+                    searchs = [area, city, province];
+                } else if (city) {
+                    searchs = [city, province];
+                } else if (province) {
+                    searchs = [province];
+                } else {
+                    searchs = ['全国']
+                }
 
-                        var layer = Loca.visualLayer({
-                            container: map,
-                            // 指定数据类型
-                            type: 'point',
-                            // 展示形状
-                            shape: 'circle'
-                        });
+                search(searchs.pop());
+
+                function search(address) {
+                    district.setExtensions('all');
+                    district.search(address, function(status, result) {
+                        if(status === 'complete'){
+
+                            if (searchs.length > 0) {
+                                const s = searchs.pop();
+                                const one = ((result.districtList[0] || []).districtList || []).find(d => d.name == s);
+                                if (one) {
+                                    search(one.adcode);
+                                } else {
+                                    setLayer((result.districtList[0] || []));
+                                }
+                            } else {
+                                setLayer((result.districtList[0] || []));                     
+                            }
+                        }
+                    });
+                }
+
+                function setLayer(zone) {
+                    amap.setCenter(zone.center);
+
+                    var bounds = zone.boundaries;
+                    if (bounds) {
+                        for (var i = 0, l = bounds.length; i < l; i++) {
+                            var polygon = new AMap.Polygon({
+                                map: amap,
+                                strokeWeight: 1,
+                                strokeColor: '#0091ea',
+                                fillColor: '#eee',
+                                fillOpacity: 0.1,
+                                path: bounds[i]
+                            });
+                            
+                        }
+                        amap.setFitView();//地图自适应
                     }
-                });
+
+                    const map = Loca.create(amap);
+
+                    const layer = Loca.visualLayer({
+                        eventSupport: true,
+                        container: map,
+                        // 指定数据类型
+                        type: 'point',
+                        // 展示形状
+                        shape: 'circle'
+                    });
+
+                    layer.setData(data, {
+                        lnglat: 'center'
+                    });
+
+                    layer.setOptions({
+                        style: {
+                            radius: 6,
+                            fill: '#4fc2ff',
+                            lineWidth: 1,
+                            stroke: '#eeeeee',
+                            opacity: 0.8
+                        },
+                        // 样式改变条件为 mouseenter 及 mouseleave，没有设置的属性会继承 style 中的配置
+                        selectStyle: {
+                            radius: 12,
+                            fill: '#ffe30a',
+                            lineWidth: 2,
+                            stroke: '#ffffff',
+                            opacity: 0.9,
+                        }
+                    });
+
+                    layer.on('click', function(ev) {
+                        var rawData = ev.rawData;
+                        self.viewDetail(rawData);
+                    });
+
+                    layer.render();
+                }
             },
             viewDetail (point) {
                 console.log(point);

@@ -114,7 +114,7 @@
                 </Col>
             </Row>
 
-            <div class="map"></div>
+            <div class="map" id="detailmap"></div>
        </div>
        </div>
     </HeaderMenu>
@@ -197,13 +197,24 @@
                     this.longitude= data.longitude;
                     this.latitude= data.latitude;
 
-                    const eventInfo = (response.data.data || []).eventinfo;
+                    const eventInfo = (response.data.data || []).eventinfo || {};
                     this.eventId = eventInfo.eventId;
                     this.eventName = eventInfo.eventName;
                     this.eventLevel = eventInfo.eventLevel;
                     this.eventTime = eventInfo.eventTime;
                     this.eventStatus = eventInfo.eventStatus;
                     this.deviceSnCode = eventInfo.deviceSnCode;
+
+                    this.createMap([this.longitude, this.latitude]);
+                });
+            },
+            createMap(location) {
+                var amap = new AMap.Map('detailmap',{
+                    zoom: 20,  //设置地图显示的缩放级别
+                    center: location,//设置地图中心点坐标
+                    mapStyle: 'amap://styles/grey',  //设置地图的显示样式
+                    viewMode: '2D',  //设置地图模式
+                    lang:'zh_cn',  //设置地图语言类型
                 });
             },
             fetch() {
@@ -246,7 +257,7 @@ h3{
 .elevator-info{
     float: left;
     width: 750px;
-    padding: 20px;
+    padding: 20px 20px 0;
     border: 1px solid #eee;
     box-shadow: 0 0 1px 1px #eee;
 }

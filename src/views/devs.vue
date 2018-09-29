@@ -236,6 +236,7 @@
                     onlineStatus: this.search.onlineStatus,
                     elv_Address: this.search.elv_Address,
                     operator: this.search.operator,
+                    userId: this.$store.state.user.id,
                     pageSize: this.pageSize,
                     pageNo: this.page,
 

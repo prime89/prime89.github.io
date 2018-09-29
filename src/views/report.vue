@@ -20,20 +20,22 @@
                     </Tooltip>
                 </div>
             </div>
-            <div class="row upper">
-                <div class="col brand-chart" id="brand-chart"></div>
-                <div class="col status-chart" >
-                    <div class="period-slt">
-                        <RadioGroup v-model="period" type="button" class="period-radio">
-                            <Radio label="year">按年</Radio>
-                            <Radio label="month">按月</Radio>
-                        </RadioGroup>
+            <div class="report-body">
+                <div class="row upper">
+                    <div class="col brand-chart" id="brand-chart"></div>
+                    <div class="col status-chart" >
+                        <div class="period-slt">
+                            <RadioGroup v-model="period" type="button" class="period-radio">
+                                <Radio label="year">按年</Radio>
+                                <Radio label="month">按月</Radio>
+                            </RadioGroup>
+                        </div>
+                        <div  id="status-chart"></div>
                     </div>
-                    <div  id="status-chart"></div>
                 </div>
-            </div>
-            <div class="row bellow" >
-                <div class="col" id="bad-chart" ></div>
+                <div class="row bellow" >
+                    <div class="col" id="bad-chart" ></div>
+                </div>
             </div>
         </div>
     </HeaderMenu>
@@ -269,7 +271,7 @@
             },
             initBadChart (data) {
                 const months = [];
-                const datas =( data || []).map(d => {
+                const datas =( data.resultData || []).map(d => {
                     months.push(d.month);
                     return d.count;
                 });
@@ -369,17 +371,20 @@
 .screen-bar .operation .btn{
     cursor: pointer;
 }
+.report-body{
+    height: calc(~"100% - 36px");
+}
 .row{
     display: flex;
-    height: calc(50% - 16px);
+    height: 50%;
     padding: 10px;
     background: #21202e;
 }
 .upper{
-    min-height: 400px;
+    min-height: 300px;
 }
 .bellow{
-    min-height: 300px;
+    min-height: 200px;
 }
 .row .col{
     margin: 0 10px;
