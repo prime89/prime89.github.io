@@ -13,6 +13,7 @@
         </Form>
 
         <div class="main-content">
+            <Button style="margin-bottom:20px;" type="primary" @click="openModifyModal({})">新增用户</Button>
             <Table stripe :columns="columns" :data="data" style="margin-bottom:20px;"></Table>
             <Page :total="total" :page-size="pageSize"
             :current="pageNo"
@@ -41,7 +42,7 @@
 
         <Modal
             v-model="modifyModal"
-            title="修改用户"
+            :title="formItem.userId? '修改用户': '新增用户'"
             >
             <Form ref="formItem" :model="formItem" :label-width="100">
                 <FormItem label="用户名" prop="username">
@@ -51,7 +52,7 @@
                     <Input size="large" v-model="formItem.REALNAME" placeholder="请输入真实姓名" style="width: 300px" />
                 </FormItem>
                 <FormItem label="地区" prop="zone">
-                    <Cascader :data="provinceData" v-model="formItem.zone" style="width: 300px;"></Cascader>
+                    <Cascader :data="provinceData" change-on-select v-model="formItem.zone" style="width: 300px;"></Cascader>
                 </FormItem>
                 <FormItem label="性别" prop="gender">
                     <Select v-model="formItem.GENDER" style="width:300px">
@@ -118,6 +119,10 @@
                     {
                         title: '用户名',
                         key: 'USERNAME'
+                    },
+                    {
+                        title: '真实姓名',
+                        key: 'REALNAME'
                     },
                     {
                         title: '角色',
@@ -206,7 +211,7 @@
             },
             resetPasswd () {
                 this.$http.post(this.$url.RESET_USER_PASSWD, {
-                    userName: this.current.userName
+                    userName: this.current.USERNAME
                 }).then(((data) => {
                     this.$Message.success('重置密码成功');
                 }).bind(this));
@@ -222,24 +227,48 @@
             modifyUser () {
                 this.$refs['formItem'].validate((valid) => {
                     if (valid) {
-                        this.$http.post(this.$url.MODIFY_USER, {
-                            id: this.formItem.userId,
-                            userName: this.formItem.USERNAME,
-                            realName: this.formItem.REALNAME,
-                            province: this.formItem.zone[0],
-                            city: this.formItem.zone[1],
-                            area: this.formItem.zone[2],
-                            gender: this.formItem.GENDER,
-                            telephone: this.formItem.TELEPHONE,
-                            level: this.formItem.LEVEL,
-                        }).then((() => {
-                            this.modifyModal = false;
-                            this.goPage(1);
-                            this.$Message.success('修改成功');
-                        }).bind(this));
+                        if (this.formItem.userId) {
+                            this._modifyUser();
+                        } else {
+                            this._addUser();
+                        }
+                        
                     }
                 });
                 
+            },
+            _modifyUser () {
+                this.$http.post(this.$url.MODIFY_USER, {
+                    id: this.formItem.userId || '',
+                    userName: this.formItem.USERNAME,
+                    realName: this.formItem.REALNAME,
+                    province: this.formItem.zone[0],
+                    city: this.formItem.zone[1],
+                    area: this.formItem.zone[2],
+                    gender: this.formItem.GENDER,
+                    telephone: this.formItem.TELEPHONE,
+                    level: this.formItem.LEVEL,
+                }).then((() => {
+                    this.modifyModal = false;
+                    this.goPage(1);
+                    this.$Message.success('修改用户成功');
+                }).bind(this));
+            },
+            _addUser () {
+                this.$http.post(this.$url.CREATE_USER, {
+                    userName: this.formItem.USERNAME,
+                    realName: this.formItem.REALNAME,
+                    province: this.formItem.zone[0],
+                    city: this.formItem.zone[1],
+                    area: this.formItem.zone[2],
+                    gender: this.formItem.GENDER,
+                    telephone: this.formItem.TELEPHONE,
+                    level: this.formItem.LEVEL,
+                }).then((() => {
+                    this.modifyModal = false;
+                    this.goPage(1);
+                    this.$Message.success('新增用户成功');
+                }).bind(this));
             },
             cancel (name) {
                 if (name) {

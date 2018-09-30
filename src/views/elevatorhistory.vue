@@ -86,7 +86,8 @@
         methods: {
             getElevatorInfo() {
                 this.$http.post(this.$url.ELEVATOR_DETAIL, {
-                    registerCode: this.$route.params.id
+                    registerCode: this.$route.params.id,
+                    userId: this.$store.state.user.id,
                 }).then((response) => {
                     this.elevator = (response.data.data || []).eleInfo || {};
                 });
@@ -98,6 +99,7 @@
             goPage (page) { 
                 this.page = page;
                 const postData = {
+                    userId: this.$store.state.user.id,
                     registerCode: this.$route.params.id,
                     eventLevel: this.search.eventLevel || '',
                     pageSize: this.pageSize,

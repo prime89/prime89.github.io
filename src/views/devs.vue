@@ -27,7 +27,7 @@
         </Form>
 
         <div class="main-content">
-            <Button style="margin-bottom: 20px;" @click="openAttachModal">新增设备</Button>
+            <Button style="margin-bottom: 20px;" @click="openAttachModal" v-if="!isQualityOfficer">新增设备</Button>
             <Table stripe :columns="columns" :data="data"></Table>
             <Page :current="page" :total="total" @on-change="goPage" 
             @on-page-size-change="changePageSize"
@@ -89,6 +89,63 @@
     import HeaderMenu from '../components/common/headerMenu.vue';
     export default {
         data () {
+            const columns = [
+                {
+                    title: '设备SN码',
+                    key: 'deviceSNCode'
+                },
+                {
+                    title: '电梯注册码',
+                    key: 'registerCode'
+                },
+                {
+                    title: '状态',
+                    key: 'onlineStatus',
+                    render (h, params) {
+                        return h('span', 
+                            params.row.onlineStatus == 1? '在线': '离线'
+                        );
+                    }
+                },
+                {
+                    title: '安装地址',
+                    key: 'elv_Address'
+                },
+                {
+                    title: '安装人员',
+                    key: 'operator'
+                },
+                {
+                    title: '安装人员电话',
+                    key: 'operatorPhone'
+                },
+                
+            ];
+            if (!this.isQualityOfficer) {
+                columns.push({
+                    title: '操作',
+                    render: (h, params) => {
+                        if (this.isQualityOfficer) {
+                            return h('div', '--');
+                        }
+                        return h('div', {
+                            class: {
+                                opr: true,
+                            }
+                        }, [
+                            h('a', {
+                                href: 'javascript:void(0)',
+                                on: {
+                                    click: () => {
+                                        this.openRemoveModal(params.row)
+                                    }
+                                }
+                            }, '删除')
+                        ]);
+
+                    },
+                },);
+            }
             return {
                 search: {},
                 isSearching: false,
@@ -116,57 +173,7 @@
                 total: 0,
                 page: 1,
                 pageSize: 10,
-                columns: [
-                    {
-                        title: '设备SN码',
-                        key: 'deviceSNCode'
-                    },
-                    {
-                        title: '电梯注册码',
-                        key: 'registerCode'
-                    },
-                    {
-                        title: '状态',
-                        key: 'onlineStatus',
-                        render (h, params) {
-                            return h('span', 
-                                params.row.onlineStatus == 1? '在线': '离线'
-                            );
-                        }
-                    },
-                    {
-                        title: '安装地址',
-                        key: 'elv_Address'
-                    },
-                    {
-                        title: '安装人员',
-                        key: 'operator'
-                    },
-                    {
-                        title: '安装人员电话',
-                        key: 'operatorPhone'
-                    },
-                    {
-                        title: '操作',
-                        render: (h, params) => {
-                            return h('div', {
-                                class: {
-                                    opr: true,
-                                }
-                            }, [
-                                h('a', {
-                                    href: 'javascript:void(0)',
-                                    on: {
-                                        click: () => {
-                                            this.openRemoveModal(params.row)
-                                        }
-                                    }
-                                }, '删除')
-                            ]);
-
-                        },
-                    },
-                ],
+                columns: columns,
                 data: []
             };
         },
@@ -174,6 +181,9 @@
             this.goPage(1);
         },
         computed: {
+            isQualityOfficer() {
+                return this.$store.state.role === 'quality_officer';
+            }
         },
         watch: {
             toStation() {

@@ -11,13 +11,13 @@
         <div class="statistics">
             <p><span>全部电梯：</span><span>{{allCount}}</span><span>台</span></p>
             <br>
-            <p><span>全部电梯：</span><span>{{onlineCount}}</span><span>台</span></p>
-            <p><span>全部电梯：</span><span>{{offlineCount}}</span><span>台</span></p>
+            <p><span>在线电梯：</span><span>{{onlineCount}}</span><span>台</span></p>
+            <p><span>离线电梯：</span><span>{{offlineCount}}</span><span>台</span></p>
             <br>
             <br>
-            <p style="color:#3ecb9f;"><span>正常电梯：</span><span>{{allCount}}</span><span>台</span></p>
-            <p style="color:#fe936b;"><span>异常电梯：</span><span>{{onlineCount}}</span><span>台</span></p>
-            <p style="color:#ff4c4c;"><span>故障电梯：</span><span>{{offlineCount}}</span><span>台</span></p>
+            <p style="color:#3ecb9f;"><span>正常电梯：</span><span>{{normalCount}}</span><span>台</span></p>
+            <p style="color:#fe936b;"><span>异常电梯：</span><span>{{incidentCount}}</span><span>台</span></p>
+            <p style="color:#ff4c4c;"><span>故障电梯：</span><span>{{badCount}}</span><span>台</span></p>
         </div>
 
         <div class="operation" v-show="!searchBarOpened">
@@ -80,6 +80,10 @@
                 allCount: 0,
                 onlineCount: 0,
                 offlineCount: 0,
+
+                normalCount: 0,
+                incidentCount: 0,
+                badCount: 0,
                 current: 'all',
                 map: null,
                 search: {},
@@ -99,17 +103,13 @@
                         key: 'offline',
                         name: '离线电梯',
                         selected: false,
-                    }, 
-                    bad: {
-                        key: 'bad',
-                        name: '故障电梯',
-                        selected: false,
-                    }
+                    },
                 },
             };
         },
         mounted () {
             this.initMap();
+            this.getData();
         },
         methods: {
             fullScreen: mutations.fullScreen,
@@ -228,8 +228,26 @@
                     layer.render();
                 }
             },
+            getData () {
+                this.$http.post(this.$url.ONLINE_NUM, {
+                    userId: this.$store.state.user.id,
+                }).then((response) => {
+                    const data = response.data.data || [];
+                    this.allCount = data.total || 0;
+                    this.offlineCount = data.offlineElvNum || 0;
+                    this.onlineCount = data.onlineCount || 0;
+                });
+
+                this.$http.post(this.$url.STATUS_NUM, {
+                    userId: this.$store.state.user.id,
+                }).then((response) => {
+                    const data = response.data.data || [];
+                    this.normalCount = data.common_event || 0;
+                    this.incidentCount = data.unusual_event || 0;
+                    this.badCount = data.breakdown_event || 0;
+                });
+            },
             viewDetail (point) {
-                console.log(point);
                 const id = point.id || 'test';
                 this.$router.push({
                     path: `/elevators/${id}`

@@ -3,6 +3,17 @@
     font-style: normal;
     font-size: 14px;
 }
+@font-face {
+    font-family: 'icomoon';
+    src:  url('fonts/icomoon.eot?ni3igb');
+    src:  url('fonts/icomoon.eot?ni3igb#iefix') format('embedded-opentype'),
+      url('fonts/icomoon.ttf?ni3igb') format('truetype'),
+      url('fonts/icomoon.woff?ni3igb') format('woff'),
+      url('fonts/icomoon.svg?ni3igb#icomoon') format('svg');
+    font-weight: normal;
+    font-style: normal;
+  }
+  
 html, body {
     height: 100%;
 }

@@ -55,7 +55,11 @@
                {{elvFloor}}
                </Col>
                 <Col span="6">
-               xx
+                    <span class="icon" :class="runningCls"></span>
+                    <span class="icon" :class="doorCls"></span>
+                    <span class="icon" :class="onlineCls"></span>
+                    <span class="icon" :class="alarmCls"></span>
+                    <span class="icon" :class="overloadCls"></span>
                </Col>
            </Row>
 
@@ -93,9 +97,9 @@
                         <dt>负责人电话</dt>
                         <dd>{{elvPsecurityTel|| '--'}}</dd>
                         <dt>安全管理员</dt>
-                        <dd>null</dd>
+                        <dd>--</dd>
                         <dt>安全管理员电话</dt>
-                        <dd>null</dd>
+                        <dd>--</dd>
                     </dl>
 
                 </Col>
@@ -105,9 +109,9 @@
                         <dt>维保单位</dt>
                         <dd>{{elvMaintenanCompany || '--'}}</dd>
                         <dt>责任人</dt>
-                        <dd>null</dd> 
+                        <dd>--</dd> 
                         <dt>责任人电话</dt>
-                        <dd>null</dd>
+                        <dd>--</dd>
                         <dt>维保人员</dt>
                         <dd>{{elvMpersonnel|| '--'}}</dd>
                     </dl>
@@ -152,17 +156,40 @@
                 elvMpersonnelTel: '',
                 longitude: '',
                 latitude: '',
+                runningState: {},
 
-                "eventId": "",
-                "eventName": "",
-                "eventLevel": "",
-                "eventTime": "",
-                "eventStatus": "",
-                "deviceSnCode": "",
+                eventId: "",
+                eventName: "",
+                eventLevel: 1,
+                eventTime: "",
+                eventStatus: "",
+                deviceSnCode: "",
             };
         },
         mounted() {
             this.init();
+        },
+        computed: {
+            runningCls() {
+                const clses = ['stop', 'up', 'down'];
+                return { [clses[this.runningState.running]]: true};
+            },
+            doorCls() {
+                const clses = ['close', 'open'];
+                return { [clses[this.runningState.door]]: true};
+            },
+            onlineCls() {
+                const clses = ['offline', 'online'];
+                return { [clses[this.runningState.online]]: true};
+            },
+            alarmCls() {
+                const clses = ['non-alarm', 'alarm'];
+                return { [clses[this.runningState.alarm]]: true};
+            },
+            overloadCls() {
+                const clses = ['non-overload', 'overload', 'en-overload'];
+                return { [clses[this.runningState.overload]]: true};
+            },
         },
         destroyed() {
             this.ws && this.ws.close();
@@ -170,7 +197,7 @@
         methods: {
             formatEventLevel(level) {
                 const maps = ['', '一般', '异常', '故障'];
-                return maps[level] || '';
+                return maps[+level] || '';
             },
             init() {
                 this.$http.post(this.$url.ELEVATOR_DETAIL, {
@@ -196,6 +223,7 @@
                     this.elvMpersonnelTel= data.elvMpersonnelTel;
                     this.longitude= data.longitude;
                     this.latitude= data.latitude;
+                    this.runningState = (response.data.data || []).runningState || {};
 
                     const eventInfo = (response.data.data || []).eventinfo || {};
                     this.eventId = eventInfo.eventId;
@@ -206,6 +234,12 @@
                     this.deviceSnCode = eventInfo.deviceSnCode;
 
                     this.createMap([this.longitude, this.latitude]);
+
+                    this.ws && this.ws.send(JSON.stringify({
+                        type: 'init',
+                        version: 1,
+                        data: [this.runningState.deviceSnCode],
+                    }));
                 });
             },
             createMap(location) {
@@ -216,11 +250,17 @@
                     viewMode: '2D',  //设置地图模式
                     lang:'zh_cn',  //设置地图语言类型
                 });
+
+                var marker = new AMap.Marker({
+                    position: new AMap.LngLat(location[0], location[1]),   // 经纬度对象，也可以是经纬度构成的一维数组[116.39, 39.9]
+                    //title: '北京'
+                });
+                amap.add(marker);
             },
             fetch() {
                 const id = this.$router.params.id;
                 //websocket更新
-                this.ws = new WebSocket(this.$urls.ws_elevator_detail);
+                this.ws = new WebSocket('ws://193.112.97.65:28080/auth-web' + this.$urls.ws_elevator_detail);
                 ws.onopen = function () {
                 // 使用 send() 方法发送数据
                 ws.send("发送数据");
@@ -229,9 +269,16 @@
                 
                 // 接收服务端数据时触发事件
                 ws.onmessage = function (evt) {
-                    var received_msg = evt.data;
-                    alert("数据已接收...");
-                    this.update();
+                    let msg;
+                    try {
+                        msg = JSON.parse(evt.data);
+                    } catch(e) {
+                        console.log('parse data to json obj error');
+                    }
+                    console.log(evt);
+                    if (msg) {
+                        self.updateStatus(msg.data);
+                    }
                 };
                 
                 // 断开 web socket 连接成功触发事件
@@ -239,8 +286,8 @@
                     alert("连接已关闭...");
                 };
             },
-            update() {
-
+            updateStatus(data) {
+                this.runningState = data;
             }
         }
         
@@ -254,6 +301,71 @@ h3{
     font-size: 16px;
     margin-bottom: 20px;
 }
+.icon{
+    font-family: 'icomoon' !important;
+    speak: none;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    margin: 6px;
+
+    /* Better Font Rendering =========== */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    
+}
+
+.up::before{
+    content: "\e90b";
+    color: #36ccad;
+}
+.down::before{
+    content: "\e902";
+    color: #36ccad;
+}
+.stop::before{
+    content: "\e90a";
+    color: #777;
+}
+.overload::before{
+    content: "\e909";
+    color: #f96;
+}
+.non-overload::before{    
+    content: "\e905";
+    color: #36ccad;
+}
+.en-overload::before{
+    content: "\e903";
+    color: #ff4c4c;
+}
+.open::before{
+    content: "\e908";
+    color: #3dcca6;
+}
+.close::before{
+    content: "\e901";
+    color: #777;
+}
+.non-alarm::before{
+    content: "\e904";
+  color: #777;
+}
+.alarm::before{
+content: "\e900";
+  color: #ff4c4c;
+}
+.offline::before{
+content: "\e906";  
+color: #777;
+}
+.online::before{
+content: "\e907";
+  color: #3dcca6;
+}
+
+
 .elevator-info{
     float: left;
     width: 750px;

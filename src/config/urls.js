@@ -6,8 +6,13 @@ export default {
     USERLIST: '/setuser/selectUser',
     RESET_USER_PASSWD: '/setuser/reSetPD',
     MODIFY_USER: '/setuser/updateUser',
+    CREATE_USER: '/setuser/createUser',
     DELETE_USER: '/setuser/delete',
 
+    //overview
+    ONLINE_NUM: '/device/queryElvOnlineStateNum',
+    STATUS_NUM: '/device/queryElvNormalStateNum',
+    
     //devs
     DEVLIST: '/device/deviceList',
     DEV_BIND: '/device/bind',
@@ -26,5 +31,7 @@ export default {
     REPORT_BRAND_DATA: '/report/brandRatio',
     REPORT_STATUS_DATA: '/report/elvStatusRatioByArea',
     REPORT_BAD_DATA: 'report/elvFaultRatioByMonth',
+
+    ws_elevator_detail: '/event',
 
 };

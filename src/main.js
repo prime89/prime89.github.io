@@ -32,7 +32,6 @@ router.beforeEach((to, from, next) => {
         return next({path: '/resetPasswd'});
     }
     iView.LoadingBar.start();
-    //Util.title(to.meta.title);
     next();
 });
 

@@ -7,7 +7,7 @@
                         <img src="../../images/u96.png" alt="" width="40px" height="40px">
                         <span>电梯动态监测系统</span>
 
-                        <span class="location"><Icon type="ios-pin" />{{location}}</span>
+                        <span class="location"><Icon type="ios-pin" />{{location || '全国'}}</span>
                     </div>
                     <div class="layout-nav">
                         <MenuItem 

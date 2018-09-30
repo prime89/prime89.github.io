@@ -184,14 +184,15 @@
                     3: 'accident',
                 };
                 reportData.forEach(d => {
-                    if (!areas[d.elv_area]) {
-                        areas[d.elv_area] = {
+                    let area = d.elv_province || d.elv_city || d.elv_area;
+                    if (!areas[area]) {
+                        areas[area] = {
                             'normal': 0,
                             'exception': 0,
                             'accident': 0,
                         };
                     } 
-                    areas[d.elv_area][eventMap[d.event_level]] = d.num;    
+                    areas[area][eventMap[d.event_level]] = d.num;    
                 });
 
                 const optData = [{
@@ -222,12 +223,12 @@
                     optData[1].data.push(areas[a].exception);
                     optData[2].data.push(areas[a].accident);
                 });
-                console.log(optData);
 
                 const chart = echarts.init(document.getElementById('status-chart'));
                 const option = {
+                    color: ['#4ba2aa', '#294556', '#d22127'],
                     title: {
-                        text: '深圳市各区域电梯状态对比图',
+                        text: (data.region || '') + '各区域电梯状态对比图',
                         textStyle: {
                             color: '#4d97a8',
                         }
@@ -280,7 +281,7 @@
                 const chart = echarts.init(document.getElementById('bad-chart'));
                 const option = {
                     title: {
-                        text: '深圳市故障电梯数量变化趋势图',
+                        text: (data.region || '') + '故障电梯数量变化趋势图',
                         textStyle: {
                             color: '#4d97a8',
                         }

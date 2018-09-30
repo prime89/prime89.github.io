@@ -19,7 +19,7 @@
                 <Input type="text" v-model="search.registerCode" style="width: 200px;"></Input>                
             </FormItem>
             <FormItem label="区域">
-                <Cascader :data="provinceData" v-model="search.zone" style="width: 300px;"></Cascader>
+                <Cascader :data="provinceData" change-on-select v-model="search.zone" style="width: 300px;"></Cascader>
             </FormItem>
             <FormItem>
                 <Button type="primary" @click="goPage(1)">查询</Button>
@@ -37,10 +37,16 @@
          <Modal
             v-model="modal"
             title="关闭事件">
+            <Row class="modal-table header">
+                <Col span=12>电梯注册码</Col>
+                <Col span=12>电梯地址</Col>
+            </Row>
+            <Row class="modal-table">
+                <Col span=12>{{current.registerCode}}</Col>
+                <Col span=12>{{current.elvAddress}}</Col>
+            </Row>
+
             <Form ref="formItem" :model="formItem" :label-width="100" :rules="ruleValidate">
-                <FormItem label="电梯注册码">
-                    <span>{{current.registerCode}}</span>
-                </FormItem>
                 <FormItem label="关闭原因" prop="closeReason">
                     <Input type="textarea" size="large" v-model="formItem.closeReason" placeholder="关闭原因" style="width: 300px" />
                 </FormItem>
@@ -142,9 +148,9 @@
                             return h('div', {
                                 class: {
                                     opr: true,
-                                    disabled: params.row.isClose
+                                    disabled: params.row.eventStatus != 1
                                 }
-                            }, [
+                            }, this.$store.state.user.role === 'quality_officer'? '--' : [
                                 h('a', {
                                     href: 'javascript:void(0)',
                                     on: {
@@ -180,6 +186,7 @@
                     elvArea: this.search.zone[2] || '',
                     pageSize: this.pageSize,
                     pageNo: page,
+                    userId: this.$store.state.user.id,
                 }
                 if (this.search.time[0]) {
                     postData.startTime = this.search.time[0];
@@ -199,6 +206,9 @@
                 });
             },
             openCloseModal(data) {
+                if (data.eventStatus != 1) {
+                    return this.$Message.warning('事件已关闭');
+                }
                 this.modal = true;
                 this.current = data;
                 this.$refs.formItem.resetFields();
@@ -231,6 +241,25 @@
     }
 </script>
 <style scoped>
+.modal-table{
+    text-align: center;
+    width: 440px;
+    margin: auto;
+}
+.modal-table div{
+    padding: 10px 0;
+}
+.header{
+    background: #eee;
+}
+.header div{
+    border: 1px solid #fff;
+}
+.table-body{
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
 h3{
     font-size: 16px;
     margin-bottom: 20px;

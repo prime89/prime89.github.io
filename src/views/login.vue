@@ -30,7 +30,7 @@
                 </FormItem> -->
                 
                 <FormItem>
-                     <Button @click="login" type="info" style="width: 400px;">登陆</Button>
+                     <Button @click="login" type="info" style="width: 400px;">登录</Button>
                 </FormItem>
                
             </Form>
@@ -105,13 +105,10 @@
                         this.loginPost(response);
                         
                     }, () => {
-                        this.loginPost({
-                            userName: '章三',
-                            sys_role_name: '超级管理员',
-                            pdstatus: true,
-                        });
+                        this.getCode();
                     }).catch(() => {
                         console.log('login error');
+                        this.getCode();
                     });
                     
                 });
