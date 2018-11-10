@@ -31,7 +31,7 @@
             <Table stripe :columns="columns" :data="data"></Table>
             <Page :current="page" :total="total" @on-change="goPage" 
             @on-page-size-change="changePageSize"
-            show-sizer />
+            show-sizer show-total/>
         </div>
 
         <Modal
@@ -80,8 +80,7 @@
             okText="删除"
             @on-ok="remove"
             @on-cancel="cancel">
-            <p>确定新增绑定该设备吗？</p>
-            <p>绑定操作将会指向什么结果</p>
+            <p>确定删除该设备吗？</p>
         </Modal>
     </HeaderMenu>
 </template>
@@ -276,7 +275,7 @@
 
                 this.$http.post(this.$url.DEV_BIND, Object.assign({
                     userId: this.$store.state.user.id,
-                    stations: JSON.stringify(arr),
+                    stations: arr,
                 }, this.formItem)).then((data) => {
                     this.$Message.success('绑定成功');
                     this.goPage(1);
@@ -310,7 +309,7 @@
 }
 .station-item{
     float: left;
-    width: 100px;
+    width: 88px;
     margin: 5px;
 }
 .station-item-checkbox{

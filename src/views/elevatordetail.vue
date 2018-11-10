@@ -32,34 +32,44 @@
                </Col>
            </Row>
             <Row class="event-info">
-               <Col span="3">
+               <Col span="3" class="col">
                {{registerCode}}
                </Col>
-                <Col span="3">
+                <Col span="3" class="col">
                {{eventName}}
                </Col>
-                <Col span="3">
+                <Col span="3" class="col">
                {{
                    formatEventLevel(eventLevel)
                }}
                </Col>
-                <Col span="3">
+                <Col span="3" class="col">
                {{
                    eventLevel==3?'是':'否'
                }}
                </Col>
-                <Col span="3">
+                <Col span="3" class="col">
                {{eventTime}}
                </Col>
-                <Col span="3">
-               {{elvFloor}}
+                <Col span="3" class="col">
+               {{this.runningState.curFloor}}
                </Col>
-                <Col span="6">
-                    <span class="icon" :class="runningCls"></span>
-                    <span class="icon" :class="doorCls"></span>
-                    <span class="icon" :class="onlineCls"></span>
-                    <span class="icon" :class="alarmCls"></span>
-                    <span class="icon" :class="overloadCls"></span>
+                <Col span="6" class="col">
+                    <Tooltip :content="runningTips">
+                        <span class="icon" :class="runningCls"></span>
+                    </Tooltip>
+                    <Tooltip :content="doorTips">
+                        <span class="icon" :class="doorCls"></span>
+                    </Tooltip>
+                    <Tooltip :content="onlineTips">
+                        <span class="icon" :class="onlineCls"></span>
+                    </Tooltip>
+                    <Tooltip :content="alarmTips">
+                        <span class="icon" :class="alarmCls"></span>
+                    </Tooltip>
+                    <Tooltip :content="overloadTips">
+                        <span class="icon" :class="overloadCls"></span>
+                    </Tooltip>
                </Col>
            </Row>
 
@@ -190,6 +200,27 @@
                 const clses = ['non-overload', 'overload', 'en-overload'];
                 return { [clses[this.runningState.overload]]: true};
             },
+
+            runningTips() {
+                const clses = ['停止', '上行', '下行'];
+                return clses[this.runningState.running];
+            },
+            doorTips() {
+                const clses = ['关门', '开门'];
+                return clses[this.runningState.door];
+            },
+            onlineTips() {
+                const clses = ['离线', '在线'];
+                return clses[this.runningState.online];
+            },
+            alarmTips() {
+                const clses = ['无警告', '警告'];
+                return clses[this.runningState.alarm];
+            },
+            overloadTips() {
+                const clses = ['负载正常', '满载', '超载'];
+                return clses[this.runningState.overload];
+            },
         },
         destroyed() {
             this.ws && this.ws.close();
@@ -235,11 +266,9 @@
 
                     this.createMap([this.longitude, this.latitude]);
 
-                    this.ws && this.ws.send(JSON.stringify({
-                        type: 'init',
-                        version: 1,
-                        data: [this.runningState.deviceSnCode],
-                    }));
+                    if (!this.ws) {
+                        this.fetch();
+                    }
                 });
             },
             createMap(location) {
@@ -258,13 +287,16 @@
                 amap.add(marker);
             },
             fetch() {
-                const id = this.$router.params.id;
+                const self = this;
                 //websocket更新
-                this.ws = new WebSocket('ws://193.112.97.65:28080/auth-web' + this.$urls.ws_elevator_detail);
+                const ws = this.ws = new WebSocket('ws://193.112.97.65:28080/auth-web' + this.$url.ws_elevator_detail);
                 ws.onopen = function () {
-                // 使用 send() 方法发送数据
-                ws.send("发送数据");
-                    alert("数据发送中...");
+                    // 使用 send() 方法发送数据
+                    ws.send(JSON.stringify({
+                        type: 'init',
+                        version: 1,
+                        data: [self.runningState.deviceSnCode],
+                    }));
                 };
                 
                 // 接收服务端数据时触发事件
@@ -283,10 +315,9 @@
                 
                 // 断开 web socket 连接成功触发事件
                 ws.onclose = function () {
-                    alert("连接已关闭...");
                 };
             },
-            updateStatus(data) {
+            updateStatus(data) {console.log(data);
                 this.runningState = data;
             }
         }
@@ -392,7 +423,7 @@ content: "\e907";
     margin-bottom: 20px;
     border-bottom: 1px solid #eee;
 }
-.event-info div{
+.event-info .col{
     padding: 10px 0;
     border: 1px solid #fff;
     text-align: center;

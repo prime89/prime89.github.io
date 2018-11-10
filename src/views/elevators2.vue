@@ -8,15 +8,16 @@
             <FormItem label="电梯注册码" :label-width="80">
                 <Input type="text" v-model="search.registerCode"></Input>
             </FormItem>
-            <FormItem label="安装人员">
-                <Input type="text" v-model="search.installer"></Input>
+            <FormItem label="安装地址">
+                <Input type="text" v-model="search.elvAddress"></Input>
             </FormItem>
             <FormItem label="状态">
-                <Select v-model="search.status" style="width:200px">
-                    <Option value="" key="">全部</Option>
-                    <Option value="1" key="1">在线</Option>
-                    <Option value="0" key="0">离线</Option>
-                </Select>
+                <RadioGroup v-model="search.online" type="button" @on-change="goPage(1)">
+                    <Radio label="">全部</Radio>
+                    <Radio label="1">在线</Radio>
+                    <Radio label="0">离线</Radio>
+                    <Radio label="3">故障</Radio>
+                </RadioGroup>
             </FormItem>
             <FormItem>
                 <Button type="primary" @click="goPage(1)">查询</Button>
@@ -66,7 +67,7 @@
 
             <Page :current="page" :total="total" :page-size="pageSize"
              @on-page-size-change="changePageSize"
-             @on-change="goPage" show-sizer />
+             @on-change="goPage" show-sizer show-total/>
         </div>
         </div>
     </HeaderMenu>
@@ -74,17 +75,16 @@
 <script>
     import HeaderMenu from '../components/common/headerMenu.vue';
     import Led from '../components/common/led.vue';
-    import provinceData from '../libs/province';
+    
     export default {
         data () {
             return {
-                provinceData: provinceData,
                 isSearching: false,
                 search: {
                     registerCode: '',
-                    installer: '',
+                    installPerson: '',
                     elvAddress: '',
-                    status: '',
+                    online: '',
                     zone: [],
                 },
                 total: 0,
@@ -103,31 +103,34 @@
             window.onresize = () => {
                 this.setBlockSize();
             }
-            const self = this;
+            // const self = this;
 
-            let flag1 = 0;
-            let flag2 = 0;
-            let flag3 = 0;
-            let flag4 = 0;
-            let flag5 = 0;
-            let flag6 = 0;
-            setInterval(() => {
-                self.updateStatus({
-                    running: flag1++%2,
-                    door: flag2++%2,
-                    online: flag3++%2,
-                    alarm: flag4++%2,
-                    overload: flag5++%2,
-                    floor: flag6++%20,
-                    deviceSnCode: 114,
-                });
-            }, 1000);
+            // let flag1 = 0;
+            // let flag2 = 0;
+            // let flag3 = 0;
+            // let flag4 = 0;
+            // let flag5 = 0;
+            // let flag6 = 0;
+            // setInterval(() => {
+            //     self.updateStatus({
+            //         running: flag1++%2,
+            //         door: flag2++%2,
+            //         online: flag3++%2,
+            //         alarm: flag4++%2,
+            //         overload: flag5++%2,
+            //         floor: flag6++%20,
+            //         deviceSnCode: 114,
+            //     });
+            // }, 1000);
         },
         destroyed() {
             window.onresize = null;
             this.ws && this.ws.close();
         },
         computed: {
+            provinceData() {
+                return this.$store.getters.provinceData;
+            },
             viewFrameStyle() {
                 const width = (this.splitWidth + 240) * this.num;
                 return {
@@ -193,21 +196,32 @@
                 } 
                 this.$set(one.runningState, 'running', data.running);
                 this.$set(one.runningState, 'door', data.door);
-                //this.$set(one.runningState, 'online', data.online);
+                this.$set(one.runningState, 'online', data.online);
                 this.$set(one.runningState, 'alarm', data.alarm);
                 this.$set(one.runningState, 'overload', data.overload);
                 this.$set(one, 'floor', data.floor);
             },
             goPage (page) {
-                this.$http.post(this.$url.ELEVATORLIST, 
-                Object.assign({
+                this.pageNo = page || this.pageNo || 1;
+                const data = Object.assign({
                     pageNo: page, 
                     pageSize: this.pageSize,
                     userId: this.$store.state.user.id,
                     elvProvince: this.search.zone[0] || '',
                     elvCity: this.search.zone[1] || '',
                     elvArea: this.search.zone[2] || '',
-                    }, this.search)).then((response) => {
+                    registerCode: this.search.registerCode || '',
+                    installPerson: this.search.installPerson || '',
+                    elvAddress: this.search.elvAddress || '',
+                    online: this.search.online == 3? '': this.search.online,
+                    eventLevel: this.search.online == 3? 3: '',
+                }, {});
+                
+
+                if (data.online === '') {
+                    delete data.online;
+                }
+                this.$http.post(this.$url.ELEVATORLIST, data).then((response) => {
                     const data = response.data.data;
                     let i = 0;
                     const sncodes = [];
@@ -261,6 +275,7 @@
         box-shadow: 0px 0px 3px 0px rgba(54, 204, 173, 1) inset;
         border-radius: 4px;
         padding: 20px 0;
+        cursor: pointer;
     }
     .view .bg{
         position: relative;
@@ -297,9 +312,10 @@
         position: absolute;
         width: 100%;
         text-align: center;
-        color: red;
+        color: #FF0000;
         font-weight: bold;
-        font-size: 24px;
+        font-size: 14px;
+        line-height: 38px;
     }
     .state{
         position: absolute;

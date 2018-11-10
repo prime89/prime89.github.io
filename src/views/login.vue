@@ -41,12 +41,14 @@
     import Verify from 'vue2-verify'
     export default {
         data () {
+            const username = localStorage.getItem('user');
+            const password = localStorage.getItem('pwd');
             return {
                 role: '超级管理员',
                 codeUrl: '',
                 formItem: { 
-                    userName: '',
-                    passWord: '',
+                    userName: username,
+                    passWord: password,
                     validateCode: '',
                 },
                 ruleValidation: {
@@ -102,12 +104,20 @@
                     formData.append('passWord', this.formItem.passWord);
                     formData.append('validateCode', this.formItem.validateCode);
                     this.$http.post(this.$url.LOGIN, formData).then((response) => {
+                        if (this.rememberMe) {
+                            localStorage.setItem('user', this.formItem.userName);
+                            localStorage.setItem('pwd', this.formItem.passWord);
+                        } else {
+                            localStorage.removeItem('user');
+                            localStorage.removeItem('pwd');
+                        }
                         this.loginPost(response);
                         
                     }, () => {
                         this.getCode();
                     }).catch(() => {
                         console.log('login error');
+                        this.$Message.error('用户名或密码错误');
                         this.getCode();
                     });
                     

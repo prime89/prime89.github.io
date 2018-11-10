@@ -12,14 +12,14 @@
                     <Option value="" key="">全部</Option>
                     <Option value="1" key="1">一般</Option>
                     <Option value="2" key="2">异常</Option>
-                    <Option value="3" key="3">严重</Option>
+                    <Option value="3" key="3">故障</Option>
                 </Select>
             </FormItem>
             <FormItem label="电梯注册码" :label-width="80">
                 <Input type="text" v-model="search.registerCode" style="width: 200px;"></Input>                
             </FormItem>
             <FormItem label="区域">
-                <Cascader :data="provinceData" change-on-select v-model="search.zone" style="width: 300px;"></Cascader>
+                <Cascader :data="provinceData" trigger="hover" change-on-select v-model="search.zone" style="width: 300px;"></Cascader>
             </FormItem>
             <FormItem>
                 <Button type="primary" @click="goPage(1)">查询</Button>
@@ -31,22 +31,24 @@
             :page-size="pageSize"
             @on-change="goPage" 
             @on-page-size-change="changePageSize" 
-            show-sizer />
+            show-sizer show-total/>
         </div>
 
          <Modal
+            width="600"
             v-model="modal"
             title="关闭事件">
-            <Row class="modal-table header">
-                <Col span=12>电梯注册码</Col>
-                <Col span=12>电梯地址</Col>
-            </Row>
-            <Row class="modal-table">
-                <Col span=12>{{current.registerCode}}</Col>
-                <Col span=12>{{current.elvAddress}}</Col>
-            </Row>
 
             <Form ref="formItem" :model="formItem" :label-width="100" :rules="ruleValidate">
+                <FormItem label="电梯注册码" prop="closeReason">
+                    <span>{{current.registerCode}}</span>
+                </FormItem>
+                <FormItem label="事件名称" prop="closeReason">
+                    <span>{{current.eventName}}</span>                    
+                </FormItem>
+                <FormItem label="电梯地址" prop="closeReason">
+                    <span>{{current.elvAddress}}</span>                    
+                </FormItem>
                 <FormItem label="关闭原因" prop="closeReason">
                     <Input type="textarea" size="large" v-model="formItem.closeReason" placeholder="关闭原因" style="width: 300px" />
                 </FormItem>
@@ -61,9 +63,13 @@
 </template>
 <script>
     import HeaderMenu from '../components/common/headerMenu.vue';
-    import provinceData from '../libs/province';
    
     export default {
+        computed: {
+            provinceData() {
+                return this.$store.getters.provinceData;
+            }
+        },
         data () {
             const levelMap = ['', '一般', '异常', '故障']
             return {
@@ -71,7 +77,6 @@
                 pageSize: 10,
                 total: 0,
                 modal: false,
-                provinceData: provinceData,
                 search: {
                     time: [],
                     eventLevel: '',
@@ -153,6 +158,9 @@
                             }, this.$store.state.user.role === 'quality_officer'? '--' : [
                                 h('a', {
                                     href: 'javascript:void(0)',
+                                    class: {
+                                        'disabled': params.row.eventStatus,
+                                    },
                                     on: {
                                         click: () => {
                                             this.openCloseModal(params.row)

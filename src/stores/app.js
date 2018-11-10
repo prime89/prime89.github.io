@@ -1,5 +1,6 @@
 import axios from '../config/http';
 import urls from '@/config/urls';
+import provinceData from '@/libs/province';
 
 let loginUser = localStorage.getItem('loginUser');
 try {
@@ -18,7 +19,52 @@ const state = {
 };
 
 const getters = {
+    provinceData: state => {
+        const province = state.user.province;
+        const city = state.user.city;
+        const area = state.user.area;
 
+        let data = provinceData.filter(d => {
+            if (!province || province === '中国') {
+                return true;
+            }
+            return province.includes(d.value);
+        }).map(d => {
+            const cities = (d.children || []).filter(c => {
+                if (!city) {
+                    return true;
+                }
+                return city.includes(c.value);
+            }).map(c => {
+                const areas = (c.children || []).filter(a => {
+                    if (!area) {
+                        return true;
+                    }
+                    return area.includes(a.value);
+                }).map(a => {
+                    return {
+                        value: a.value,
+                        label: a.label,
+                        parent_code: a.parent_code,
+                    }
+                });
+                return {
+                    value: c.value,
+                    label: c.label,
+                    parent_code: c.parent_code,
+                    children: areas,
+                }
+            });
+
+            return {
+                value: d.value,
+                label: d.label,
+                parent_code: d.parent_code,
+                children: cities,
+            }
+        });
+        return data;
+    }
 };
 
 const mutations = {

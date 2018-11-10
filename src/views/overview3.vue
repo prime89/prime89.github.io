@@ -1,7 +1,7 @@
 <template>
     <HeaderMenu>
         <div class="map-container">
-        <div id="map" @click="closeWindow"></div>
+        <div id="map"></div>
         <div class="type-cells">
             <CellGroup @on-click="select">
                 <Cell :name="key" :title="group.name" :key="key" :selected="group.selected" v-for="(group, key) in types"/>
@@ -132,7 +132,7 @@
                     lang:'zh_cn',  //设置地图语言类型
                 });
 
-                const infoWindow = this.infoWindow = new AMap.InfoWindow();
+                const infoWindow = new AMap.InfoWindow();
 
                 var opts = {
                     extensions: 'all',
@@ -196,87 +196,91 @@
                         amap.setFitView();//地图自适应
                     }
 
-                    const map = Loca.create(amap);
+                    
 
-                    const layer = self.layer = Loca.visualLayer({
-                        eventSupport: true,
-                        container: map,
-                        // 指定数据类型
-                        type: 'point',
-                        // 展示形状
-                        shape: 'circle'
+                    const cluster = self.cluster = new AMap.MarkerClusterer(amap, [], {
+                        gridSize: 80,
+                        renderCluserMarker: _renderCluserMarker
                     });
-
-                    // layer.setData([{
-                    //     name: '北京市',
-                    //     center: '114.088616,22.551412'
-                    // }], {
-                    //     lnglat: 'center'
-                    // }); 
-                    layer.setData([], {
-                        lnglat: 'center'
-                    });
-
-                    layer.setOptions({
-                        style: {
-                            radius: 6,
-                            //fill: '#4fc2ff',
-                            fill: function(res) {
-                                const eventLevel = res.value.eventLevel;
-                                const onlineState = res.value.onlineState;
-
-                                if (eventLevel == 3) {
-                                    return 'red';
-                                }
-                                if (onlineState == 0) {
-                                    return 'gray';
-                                }
-                                return '#3ecb9f';
-                            },
-                            lineWidth: 1,
-                            stroke3: '#eeeeee',
-                            opacity: 0.8
-                        },
-                        // 样式改变条件为 mouseenter 及 mouseleave，没有设置的属性会继承 style 中的配置
-                        selectStyle: {
-                            radius: 12,
-                            fill: '#ffe30a',
-                            lineWidth: 2,
-                            stroke: '#ffffff',
-                            opacity: 0.9,
-                        }
-                    });
-
-                    layer.on('mouseenter', (e) => {
-                        const rawData = e.rawData;
-                        let state = '在线';
-                        if (rawData.eventLevel == 3) {
-                            state = '故障';
-                        } else if (rawData.onlineState == 0) {
-                            state = '离线';
-                        }
-                        infoWindow.setContent([
-                            '<b>电梯注册码：</b>' + rawData.registerCode,
-                            '<b>安装地址：</b>' + rawData.address,
-                            '<b>状态：</b>' + state,
-                            ].join('<br>'));
-                        infoWindow.open(amap, rawData.center.split(','));
-                        
-                    });
-
-
-                    layer.on('click', function(ev) {
-                        var rawData = ev.rawData;
-                        self.viewDetail(rawData);
-                    });
-
-                    layer.render();
 
                     self.initWs();
+
+
+                    // const map = Loca.create(amap);
+
+                    // const layer = self.layer = Loca.visualLayer({
+                    //     eventSupport: true,
+                    //     container: map,
+                    //     // 指定数据类型
+                    //     type: 'point',
+                    //     // 展示形状
+                    //     shape: 'circle'
+                    // });
+
+                    // // layer.setData([{
+                    // //     name: '北京市',
+                    // //     center: '114.088616,22.551412'
+                    // // }], {
+                    // //     lnglat: 'center'
+                    // // }); 
+                    // layer.setData([], {
+                    //     lnglat: 'center'
+                    // });
+
+                    // layer.setOptions({
+                    //     style: {
+                    //         radius: 6,
+                    //         //fill: '#4fc2ff',
+                    //         fill: function(res) {
+                    //             const eventLevel = res.value.eventLevel;
+                    //             const onlineState = res.value.onlineState;
+
+                    //             if (eventLevel == 3) {
+                    //                 return 'red';
+                    //             }
+                    //             if (onlineState == 0) {
+                    //                 return 'gray';
+                    //             }
+                    //             return '#4fc2ff';
+                    //         },
+                    //         lineWidth: 1,
+                    //         stroke3: '#eeeeee',
+                    //         opacity: 0.8
+                    //     },
+                    //     // 样式改变条件为 mouseenter 及 mouseleave，没有设置的属性会继承 style 中的配置
+                    //     selectStyle: {
+                    //         radius: 12,
+                    //         fill: '#ffe30a',
+                    //         lineWidth: 2,
+                    //         stroke: '#ffffff',
+                    //         opacity: 0.9,
+                    //     }
+                    // });
+
+                    // layer.on('mouseenter', (e) => {
+                    //     const rawData = e.rawData;
+                    //     let state = '在线';
+                    //     if (rawData.eventLevel == 3) {
+                    //         state = '故障';
+                    //     } else if (rawData.onlineState == 0) {
+                    //         state = '离线';
+                    //     }
+                    //     infoWindow.setContent([
+                    //         '<b>电梯注册码：</b>' + rawData.registerCode,
+                    //         '<b>安装地址：</b>' + rawData.address,
+                    //         '<b>状态：</b>' + state,
+                    //         ].join('<br>'));
+                    //     infoWindow.open(amap, rawData.center.split(','));
+                    // });
+
+
+                    // layer.on('click', function(ev) {
+                    //     var rawData = ev.rawData;
+                    //     self.viewDetail(rawData);
+                    // });
+
+                    // layer.render();
                 }
-            },
-            closeWindow() {
-                this.infoWindow && this.infoWindow.close();
             },
             getData () {
                 this.$http.post(this.$url.ONLINE_NUM, {
@@ -298,10 +302,7 @@
                 });
             },
             viewDetail (point) {
-                const id = point.registerCode || '';
-                if (!id){
-                    return;
-                }
+                const id = point.id || 'test';
                 this.$router.push({
                     path: `/elevators/${id}`
                 });
@@ -320,7 +321,7 @@
             initWs() {
                 const self = this;
                 //websocket更新
-                const ws = this.ws = new WebSocket('ws://193.112.97.65:28080/auth-web' + this.$url.ws_elevator_map + '?userId=' + this.$store.state.user.id);
+                const ws = this.ws = new WebSocket('ws://193.112.97.65:28080/auth-web' + this.$url.ws_elevator_map + '?userId=17');
                 ws.onopen = function () {
                 // 使用 send() 方法发送数据
                 };
@@ -351,7 +352,7 @@
                         offset: new AMap.Pixel(-15, -15)
                     });
                     this.elevatorData[d.registerCode] = {
-                        center: `${(+d.longitude).toFixed(6)},${(+d.latitude).toFixed(6)}`,
+                        //center: `${(+d.longitude).toFixed(6)},${(+d.latitude).toFixed(6)}`,
                         longitude: (+d.longitude).toFixed(6),
                         latitude: (+d.latitude).toFixed(6),
                         registerCode: d.registerCode,
@@ -359,15 +360,19 @@
                         address: d.address,
                         onlineState: d.onlineState,
                         sn: d.sn,
+                        marker:  m,
                     };
 
-                    if (!this.layer) {
+                    if (!this.cluster) {
                         return;
                     }
-                    this.layer.setData(this.filterData(), {
-                        lnglat: 'center'
-                    });
-                    this.layer.render();
+                    if (existMarker) {
+                        this.cluster.removeMarker(existMarker);
+                    } else {
+                        this.count++;
+                    }
+                   
+                    this.cluster.addMarker(m);
                 });
             },
             handleReset() {
@@ -375,13 +380,10 @@
                 this.handleSearch();
             },
             handleSearch() {
-                if (!this.layer) {
+                if (!this.cluster) {
                     return;
                 }
-                this.layer.setData(this.filterData(), {
-                    lnglat: 'center'
-                });
-                this.layer.render();
+                this.filterData();
             },
             filterData() {
                 const snCode = this.search.snCode;
@@ -390,7 +392,7 @@
                 const registerCode = this.search.registerCode;
                 const currentState = this.current;
 
-                const d = Object.values(this.elevatorData).filter(d => {
+                Object.values(this.elevatorData).forEach(d => {
                     let flag = true;
                     if (snCode && !(d.snCode || '').includes(snCode)) {
                         flag = false;
@@ -409,10 +411,12 @@
                     }
                     else if ((currentState == 'offline') && d.onlineState != 0) {
                         flag = false;
+                    }console.log('remove');
+                    this.cluster.removeMarker(d.marker);
+                    if (flag) {console.log('add');
+                        this.cluster.addMarker(d.marker);
                     }
-                    return flag;
                 }); 
-                return d;
             }
 
         },

@@ -18,7 +18,9 @@ axios.defaults.withCredentials=true;
 Vue.axios = axios;
 
 //axios.defaults.headers.common['Content-Type'] = 'multipart/form-data';
-
+axios.interceptors.request.use((config) => {
+    return config;
+});
 axios.interceptors.response.use(function (response) {
     // Do something with response data
     if (response.data.code != 0) {

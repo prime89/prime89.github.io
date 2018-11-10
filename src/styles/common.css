@@ -126,3 +126,8 @@ html, body {
     background: #2d8cf0;
     color: #fff;
 }
+.disabled a{
+    color: gray;
+    cursor: not-allowed;
+    pointer-events: none;
+}

@@ -27,7 +27,7 @@
             <Table stripe :columns="columns" :data="data" style="margin-bottom:20px;"></Table>
             <Page :current="page" :total="total" :page-size="pageSize"
              @on-page-size-change="changePageSize"
-             @on-change="goPage" show-sizer />
+             @on-change="goPage" show-sizer show-total/>
         </div>
         </div>
     </HeaderMenu>

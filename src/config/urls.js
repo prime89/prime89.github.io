@@ -33,5 +33,6 @@ export default {
     REPORT_BAD_DATA: 'report/elvFaultRatioByMonth',
 
     ws_elevator_detail: '/event',
+    ws_elevator_map: '/info',
 
 };

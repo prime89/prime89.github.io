@@ -19,7 +19,7 @@
             :current="pageNo"
             @on-page-size-change="changePageSize"
             @on-change="goPage"
-            show-sizer />
+            show-sizer show-total/>
         </div>
 
         <Modal
@@ -51,8 +51,17 @@
                 <FormItem label="真实姓名" prop="realName">
                     <Input size="large" v-model="formItem.REALNAME" placeholder="请输入真实姓名" style="width: 300px" />
                 </FormItem>
+                <FormItem label="角色" prop="roleId">
+                    <Select v-model="formItem.roleId" style="width:300px">
+                        <Option value="2" key="2">管理员</Option>
+                        <Option value="3" key="3">质监局</Option>
+                        <Option value="4" key="4">坐席</Option>
+                        <Option value="5" key="5">安装人员</Option>
+                        <Option value="6" key="6">安保人员</Option>
+                    </Select>
+                </FormItem>
                 <FormItem label="地区" prop="zone">
-                    <Cascader :data="provinceData" change-on-select v-model="formItem.zone" style="width: 300px;"></Cascader>
+                    <Cascader @on-change="onAreaChange" :data="provinceData" change-on-select v-model="formItem.zone" style="width: 300px;"></Cascader>
                 </FormItem>
                 <FormItem label="性别" prop="gender">
                     <Select v-model="formItem.GENDER" style="width:300px">
@@ -62,9 +71,7 @@
                 </FormItem>
                 <FormItem label="区域级别" prop="level">
                     <Select v-model="formItem.LEVEL" style="width:300px">
-                        <Option value="1" key="1">省级</Option>
-                        <Option value="2" key="2">市级</Option>
-                        <Option value="3" key="3">区县级</Option>
+                        <Option :value="o.key" :key="o.key" v-for="o in levelOptions">{{o.value}}</Option>
                     </Select>
                 </FormItem>
                 <FormItem label="联系方式" prop="telephone">
@@ -82,7 +89,6 @@
 <script>
     import HeaderMenu from '../components/common/headerMenu.vue';
     import permission from '../config/permission';
-    import provinceData from '../libs/province';
 
     export default {
         data () {
@@ -92,7 +98,6 @@
                 deleteModal: false,
                 resetModal: false,
                 current: null,
-                provinceData: provinceData,
                 pageSize: 10,
                 pageNo: 1,
                 total: 0,
@@ -106,6 +111,7 @@
                     zone: [],
                     gender: '',
                     level: '',
+                    roleId: '',
                 },
                 // ruleValidate: {
                 //     username: [
@@ -130,6 +136,10 @@
                         render (h, params) {
                             return h('span', permission.roles[params.row.roleName]);
                         },
+                    },
+                    {
+                        title: '管理区域',
+                        key: 'managerScope'
                     },
                     {
                         title: '联系方式',
@@ -178,12 +188,61 @@
         mounted () {
             this.goPage(1);
         },
+        computed: {
+            provinceData() {
+                return this.$store.getters.provinceData;
+            },
+            levelOptions() {
+                const province = this.$store.state.user.province;
+                const city = this.$store.state.user.city;
+                const area = this.$store.state.user.area;
+                if (area) {
+                    return [{
+                        key: 3,
+                        value: '区县级',
+                    }];
+                } else if (city) {
+                    return [{
+                        key: 2,
+                        value: '市级',
+                    },{
+                        key: 3,
+                        value: '区县级',
+                    }];
+                } else {
+                    return [{
+                        key: 1,
+                        value: '省级',
+                    }, {
+                        key: 2,
+                        value: '市级',
+                    },{
+                        key: 3,
+                        value: '区县级',
+                    }];
+                }
+            }
+        },
         methods: {
+            onAreaChange(value, selectedData) {
+                const l = this.levelOptions.length;
+                if ( l === 3 ) {
+                    return;
+                } else if (l ===2 ) {
+                    if ((value || []).length < 2) {
+                        this.$set(this.formItem, 'zone', []);
+                    }
+                } else if (l === 1) {
+                    if ((value || []).length < 1) {
+                        this.$set(this.formItem, 'zone', []);
+                    }
+                }
+            },
             changePageSize (size) {
                 this.pageSize = size;
                 this.goPage(1);
             },
-            goPage (pageNo) {console.log(pageNo);
+            goPage (pageNo) {
                 this.pageNo = pageNo || this.pageNo;
                 this.$http.post(this.$url.USERLIST, {
                     userName: this.search.userName,
@@ -203,6 +262,8 @@
             openModifyModal (data) {
                 this.current = data;
                 this.formItem = Object.assign({}, data);
+                this.formItem.roleId = String(this.formItem.roleId);
+                this.formItem.zone = [data.province || '', data.city|| '', data.area||''];
                 this.modifyModal = true;
             },
             openDeleteModal (data) {
@@ -221,7 +282,7 @@
                     userName: this.current.USERNAME,
                 }).then((() => {
                     this.$Message.success('删除成功');
-                    this.getUsers();
+                    this.goPage(1);
                 }).bind(this));
             },
             modifyUser () {
@@ -248,6 +309,7 @@
                     gender: this.formItem.GENDER,
                     telephone: this.formItem.TELEPHONE,
                     level: this.formItem.LEVEL,
+                    roleId: +this.formItem.roleId,
                 }).then((() => {
                     this.modifyModal = false;
                     this.goPage(1);
@@ -264,6 +326,7 @@
                     gender: this.formItem.GENDER,
                     telephone: this.formItem.TELEPHONE,
                     level: this.formItem.LEVEL,
+                    roleId: +this.formItem.roleId,
                 }).then((() => {
                     this.modifyModal = false;
                     this.goPage(1);

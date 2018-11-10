@@ -30,7 +30,12 @@ module.exports = merge(webpackBaseConfig, {
             filename: '../index.html',
             template: './src/template/index.ejs',
             inject: false
-        })
+        }),
+        new HtmlWebpackPlugin({
+            filename: '../404.html',
+            template: './src/template/index.ejs',
+            inject: false
+        }),
     ],
     devServer: {
         proxy: {
