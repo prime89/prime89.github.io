@@ -117,6 +117,12 @@
         mounted () {
             this.initMap();
             this.getData();
+            setInterval(() => {
+                if (this.newData) {
+                    this.newData = false;
+                    this.rerenderMap(); 
+                } 
+            }, 800);
         },
         methods: {
             fullScreen: mutations.fullScreen,
@@ -320,7 +326,7 @@
             initWs() {
                 const self = this;
                 //websocket更新
-                const ws = this.ws = new WebSocket('ws://193.112.97.65:28080/auth-web' + this.$url.ws_elevator_map + '?userId=' + this.$store.state.user.id);
+                const ws = this.ws = new WebSocket(this.$url.ws_base + this.$url.ws_elevator_map + '?userId=' + this.$store.state.user.id);
                 ws.onopen = function () {
                 // 使用 send() 方法发送数据
                 };
@@ -334,6 +340,7 @@
                         console.error('parse data to json obj error');
                     }
                     if (msg) {
+                        self.newData = true;
                         self.updateList(msg.data);
                     }
                 };
@@ -364,11 +371,13 @@
                     if (!this.layer) {
                         return;
                     }
-                    this.layer.setData(this.filterData(), {
-                        lnglat: 'center'
-                    });
-                    this.layer.render();
                 });
+            },
+            rerenderMap () {console.log('rendermap');
+                this.layer.setData(this.filterData(), {
+                    lnglat: 'center'
+                });
+                this.layer.render();
             },
             handleReset() {
                 this.$refs.formInline.resetFields();
@@ -378,10 +387,7 @@
                 if (!this.layer) {
                     return;
                 }
-                this.layer.setData(this.filterData(), {
-                    lnglat: 'center'
-                });
-                this.layer.render();
+                this.rerenderMap();
             },
             filterData() {
                 const snCode = this.search.snCode;

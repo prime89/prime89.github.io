@@ -153,9 +153,9 @@
                             return h('div', {
                                 class: {
                                     opr: true,
-                                    disabled: params.row.eventStatus != 1
+                                    disabled: params.row.eventStatus != 1 
                                 }
-                            }, this.$store.state.user.role === 'quality_officer'? '--' : [
+                            }, (this.$store.state.user.role === 'quality_officer' || params.row.eventLevel == 1)? '--' : [
                                 h('a', {
                                     href: 'javascript:void(0)',
                                     class: {
@@ -229,7 +229,8 @@
 
                     this.$http.post(this.$url.CLOSE_INCIDENT, Object.assign({
                         eventIds: [this.current.eventId],
-                        closer: this.$store.state.user.id
+                        closer: this.$store.state.user.id,
+                        userId: this.$store.state.user.id,
                     }, this.formItem)).then((data) => {
                         this.modal = false;
                         this.$Message.success('关闭成功');

@@ -39,10 +39,14 @@
 </template>
 <script>
     import Verify from 'vue2-verify'
+    import Cookies from 'js-cookie';
+
     export default {
         data () {
-            const username = localStorage.getItem('user');
-            const password = localStorage.getItem('pwd');
+            // const username = localStorage.getItem('user');
+            const username = Cookies.get('user');
+            // const password = localStorage.getItem('pwd');
+            const password = Cookies.get('pwd');
             return {
                 role: '超级管理员',
                 codeUrl: '',
@@ -103,13 +107,13 @@
                     formData.append('userName', this.formItem.userName);
                     formData.append('passWord', this.formItem.passWord);
                     formData.append('validateCode', this.formItem.validateCode);
-                    this.$http.post(this.$url.LOGIN, formData).then((response) => {
+                    this.$http.post(this.$url.LOGIN, formData, {timeout: 2e3}).then((response) => {
                         if (this.rememberMe) {
-                            localStorage.setItem('user', this.formItem.userName);
-                            localStorage.setItem('pwd', this.formItem.passWord);
+                            Cookies.set('user', this.formItem.userName, { expires: 1000000 });
+                            Cookies.set('pwd', this.formItem.passWord, { expires: 1000000 });
                         } else {
-                            localStorage.removeItem('user');
-                            localStorage.removeItem('pwd');
+                            Cookies.remove('user');
+                            Cookies.remove('pwd');
                         }
                         this.loginPost(response);
                         
@@ -126,6 +130,11 @@
             loginPost (response) {
                 //set user role
                 const data = response.data.data;
+
+                if (data.code != 0) {
+                    this.getCode();
+                    return this.$Message.error(data.message);
+                }
                 const userinfo = {
                     id: data.userId,
                     username: data.userName,
@@ -136,7 +145,7 @@
                     area: data.area || '',
                 };
                 this.$store.commit('setUser', userinfo);
-                localStorage.setItem('loginUser', JSON.stringify(userinfo));
+                Cookies.set('loginUser', JSON.stringify(userinfo));
                 
                 this.reset();
                 if (!userinfo.passwdResetted) {

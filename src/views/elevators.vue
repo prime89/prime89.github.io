@@ -20,6 +20,7 @@
             </FormItem>
             <FormItem>
                 <Button type="primary" @click="goPage(1)">查询</Button>
+                <Button type="ghost" @click="import()">导入</Button>
             </FormItem>
         </Form>
 

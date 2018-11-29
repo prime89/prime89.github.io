@@ -21,6 +21,7 @@
             </FormItem>
             <FormItem>
                 <Button type="primary" @click="goPage(1)">查询</Button>
+                <Button type="primary" @click="openImportModal(1)" v-if="isAdmin">导入数据</Button>
             </FormItem>
         </Form>
 
@@ -41,6 +42,7 @@
                     'overload': item.runningState.overload == 1,
                     'en-overload': item.runningState.overload == 2,
                     'non-overload': item.runningState.overload == 0,
+                    'bad': item.runningState.eventLevel == 3,
                 }"
                  :style="viewStyle" :key="item.id" v-for="item in elevators">
                     <div class="bg">
@@ -54,6 +56,7 @@
                         <div class="state">
                             <div class="icon running-status"></div>
                             <div class="icon open-status"></div>
+                            <div class="icon alarm-status"></div>
                             <div class="icon overload-status"></div>
                         </div>
                         <div class="address">
@@ -70,6 +73,21 @@
              @on-change="goPage" show-sizer show-total/>
         </div>
         </div>
+
+        <Modal
+            v-model="importModal"
+            title="导入数据">
+            <Form ref="importForm" :model="importForm" :label-width="100" :rules="ruleValidate">
+                <FormItem label="Area Code" prop="areacode">
+                    <Input size="large" v-model="importForm.areacode" placeholder="请输入Area Code" style="width: 300px" />
+                </FormItem>
+            </Form>
+
+            <div slot="footer">
+                <Button type="text" size="large" @click="importModal=false">取消</Button>
+                <Button type="primary" size="large" @click="importData">确定</Button>
+            </div>
+        </Modal>
     </HeaderMenu>
 </template>
 <script>
@@ -94,6 +112,15 @@
                 ws: null,
                 splitWidth: 0,
                 num: 0,
+                importModal: false,
+                importForm: {
+                    areacode: '',
+                },
+                ruleValidate: {
+                    areacode: [
+                        { required: true, message: '请输入Area Code', trigger: 'blur' }
+                    ],
+                },
             };
         },
         mounted() {
@@ -142,7 +169,12 @@
                 return {
                     width: `${this.splitWidth + 220}px`
                 }
-            }
+            },
+            isAdmin() {
+                const role = this.$store.state.role; 
+
+                return role === 'admin' || role === 'region_admin'; 
+            },
         },
         methods: {
             viewDetail(item) {
@@ -165,7 +197,7 @@
             initWs() {
                 const self = this;
                 //websocket更新
-                let ws = this.ws = new WebSocket('ws://193.112.97.65:28080/auth-web' + this.$url.ws_elevator_detail);
+                let ws = this.ws = new WebSocket('wss://edms.gd95009.com/auth-web' + this.$url.ws_elevator_detail);
                 ws.onopen = function () {}
                 // 使用 send() 方法发送数据
                 
@@ -199,6 +231,7 @@
                 this.$set(one.runningState, 'online', data.online);
                 this.$set(one.runningState, 'alarm', data.alarm);
                 this.$set(one.runningState, 'overload', data.overload);
+                this.$set(one.runningState, 'eventLevel', data.eventLevel);
                 this.$set(one, 'floor', data.floor);
             },
             goPage (page) {
@@ -250,7 +283,24 @@
             changePageSize (pageSize) {
                 this.pageSize = pageSize;
                 this.goPage(1);
-            }
+            },
+            openImportModal () {
+                this.importModal = true;
+                this.$refs.importForm.resetFields();
+            },
+            importData() {
+                this.$http.post(this.$url.IMPORT_DATA, {
+                    areacode: this.importForm.areacode,
+                    userId: this.$store.state.user.id,
+                }).then((response) => {
+                    if (response.data.code == 0) {
+                        this.$Message.success('数据导入成功');
+                    } else {
+                        this.$Message.error(response.data.message || '数据导入失败');
+                    }
+                    this.importModal = false;
+                });
+            },
         },
         components: {
             HeaderMenu,
@@ -320,7 +370,8 @@
     .state{
         position: absolute;
         display: flex;
-        bottom: 30px;
+        justify-content: center;
+        bottom: 45px;
         padding: 10px 42px;
         width: 100%;
         background: rgba(255, 255, 255, 0.8);
@@ -371,6 +422,14 @@
         content: "\e903";
         color: #ff4c4c;
     }
+    .non-alarm .alarm-status::before{
+        content: "\E904";
+        color: #777;
+    }
+    .alarm .alarm-status::before{
+        content: "\E900";
+        color: #ff4c4c;
+    }
     .open .open-status::before{
         content: "\e908";
         color: #3dcca6;
@@ -394,7 +453,8 @@
     .offline .state{
         display: none;
     }
-    .alarm.view{
+    
+    .bad.view{
         box-shadow: 0px 0px 3px 0px rgb(204, 77, 54) inset;
     }
     .offline.view{

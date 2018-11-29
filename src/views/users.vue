@@ -44,15 +44,15 @@
             v-model="modifyModal"
             :title="formItem.userId? '修改用户': '新增用户'"
             >
-            <Form ref="formItem" :model="formItem" :label-width="100">
-                <FormItem label="用户名" prop="username">
+            <Form ref="formItem" :model="formItem" :label-width="100" :rules="ruleValidate">
+                <FormItem label="用户名" prop="USERNAME">
                     <Input size="large" v-model="formItem.USERNAME" placeholder="请输入用户名" style="width: 300px" />
                 </FormItem>
-                <FormItem label="真实姓名" prop="realName">
+                <FormItem label="真实姓名" prop="REALNAME">
                     <Input size="large" v-model="formItem.REALNAME" placeholder="请输入真实姓名" style="width: 300px" />
                 </FormItem>
                 <FormItem label="角色" prop="roleId">
-                    <Select v-model="formItem.roleId" style="width:300px">
+                    <Select v-model="formItem.roleId" style="width:300px" @on-change="changeRoleId">
                         <Option value="2" key="2">管理员</Option>
                         <Option value="3" key="3">质监局</Option>
                         <Option value="4" key="4">坐席</Option>
@@ -60,21 +60,16 @@
                         <Option value="6" key="6">安保人员</Option>
                     </Select>
                 </FormItem>
-                <FormItem label="地区" prop="zone">
-                    <Cascader @on-change="onAreaChange" :data="provinceData" change-on-select v-model="formItem.zone" style="width: 300px;"></Cascader>
+                <FormItem label="地区" prop="zone" v-show="roleId == 2">
+                    <Cascader @on-change="onAreaChange" :data="provinceData" v-model="formItem.zone" change-on-select style="width: 300px;"></Cascader>
                 </FormItem>
-                <FormItem label="性别" prop="gender">
+                <FormItem label="性别" prop="GENDER">
                     <Select v-model="formItem.GENDER" style="width:300px">
                         <Option value="男" key="男">男</Option>
                         <Option value="女" key="女">女</Option>
                     </Select>
                 </FormItem>
-                <FormItem label="区域级别" prop="level">
-                    <Select v-model="formItem.LEVEL" style="width:300px">
-                        <Option :value="o.key" :key="o.key" v-for="o in levelOptions">{{o.value}}</Option>
-                    </Select>
-                </FormItem>
-                <FormItem label="联系方式" prop="telephone">
+                <FormItem label="联系方式" prop="TELEPHONE">
                     <Input size="large" v-model="formItem.TELEPHONE" placeholder="联系方式" style="width: 300px" />
                 </FormItem>
             </Form>
@@ -92,6 +87,9 @@
 
     export default {
         data () {
+            const province = this.$store.state.user.province;
+            const city = this.$store.state.user.city;
+            const area = this.$store.state.user.area;
             return {
                 isSearching: false,
                 modifyModal: false,
@@ -105,22 +103,35 @@
                     userName: '',
                     telephone: '',
                 },
+                roleId: '',
                 formItem: {
-                    username: '',
-                    telephone: '',
+                    USERNAME: '',
+                    REALNAME: '',
+                    TELEPHONE: '',
                     zone: [],
-                    gender: '',
-                    level: '',
+                    GENDER: '',
                     roleId: '',
                 },
-                // ruleValidate: {
-                //     username: [
-                //         { required: true, message: '请输入用户名', trigger: 'blur' }
-                //     ],
-                //     telephone: [
-                //         { required: true, message: '请输入联系方式', trigger: 'blur' }
-                //     ],
-                // },
+                ruleValidate: {
+                    USERNAME: [
+                        { required: true, message: '请输入用户名', trigger: 'blur' }
+                    ],
+                    REALNAME: [
+                        { required: true, message: '请输入真实姓名', trigger: 'blur' }
+                    ],
+                    TELEPHONE: [
+                        { required: true, message: '请输入联系方式', trigger: 'blur' }
+                    ],
+                    zone: [
+                        { required: true, type: 'array', min: 1, message: '请输入区域', trigger: 'blur' },
+                    ],
+                    GENDER: [
+                        { required: true, message: '请选择性别', trigger: 'blur' }
+                    ],
+                    roleId: [
+                        { required: true, message: '请输入角色', trigger: 'blur' },
+                    ],
+                },
                 columns: [
                     {
                         title: '用户名',
@@ -188,9 +199,25 @@
         mounted () {
             this.goPage(1);
         },
+        watch: {
+        },
         computed: {
             provinceData() {
-                return this.$store.getters.provinceData;
+                const data = this.$store.getters.userProvinceData;
+                return data;
+            },
+            userLevel() {
+                const province = this.$store.state.user.province;
+                const city = this.$store.state.user.city;
+                const area = this.$store.state.user.area;
+                if (area) {
+                    return 3;
+                } else if (city) {
+                    return 2;
+                } else if (province && province !== '中国') {
+                    return 1;
+                }
+                return 0;
             },
             levelOptions() {
                 const province = this.$store.state.user.province;
@@ -202,6 +229,11 @@
                         value: '区县级',
                     }];
                 } else if (city) {
+                    return [{
+                        key: 3,
+                        value: '区县级',
+                    }];
+                } else if (province && province !== '中国') {
                     return [{
                         key: 2,
                         value: '市级',
@@ -224,17 +256,28 @@
             }
         },
         methods: {
-            onAreaChange(value, selectedData) {
+            changeRoleId(val) {
+                this.roleId = val;console.log(val, '====');
+                this.$set(this.formItem, 'roleId', val);
+
+                if (val != 2) {
+                    const province = this.$store.state.user.province;
+                    const city = this.$store.state.user.city;
+                    const area = this.$store.state.user.area;
+                    this.$set(this.formItem, 'zone', [province, city, area]);
+                }
+            },
+            onAreaChange(value, selectedData) {return;
                 const l = this.levelOptions.length;
                 if ( l === 3 ) {
                     return;
                 } else if (l ===2 ) {
-                    if ((value || []).length < 2) {
-                        this.$set(this.formItem, 'zone', []);
+                    if ((value || []).length <= 1) {
+                        return this.$set(this.formItem, 'zone', []);
                     }
                 } else if (l === 1) {
-                    if ((value || []).length < 1) {
-                        this.$set(this.formItem, 'zone', []);
+                    if ((value || []).length <= 2) {
+                        return this.$set(this.formItem, 'zone', []);
                     }
                 }
             },
@@ -263,7 +306,14 @@
                 this.current = data;
                 this.formItem = Object.assign({}, data);
                 this.formItem.roleId = String(this.formItem.roleId);
-                this.formItem.zone = [data.province || '', data.city|| '', data.area||''];
+                this.formItem.zone = this.formItem.zone = [];
+                data.province = data.province || data.PROVINCE;
+                data.city = data.city || data.CITY;
+                data.area = data.area || data.AREA;
+
+                data.province && this.formItem.zone.push(data.province);
+                data.city && this.formItem.zone.push(data.city);
+                data.area && this.formItem.zone.push(data.area);
                 this.modifyModal = true;
             },
             openDeleteModal (data) {
@@ -280,6 +330,7 @@
             deleteUser () {
                 this.$http.post(this.$url.DELETE_USER, {
                     userName: this.current.USERNAME,
+                    userId: this.current.userId,                    
                 }).then((() => {
                     this.$Message.success('删除成功');
                     this.goPage(1);
@@ -298,17 +349,37 @@
                 });
                 
             },
+            checkZone() {
+                let zone = this.formItem.zone;
+                const province = this.$store.state.user.province;
+                const city = this.$store.state.user.city;
+                const area = this.$store.state.user.area;
+
+                if (this.formItem.roleId != 2) {
+                    return [province, city, area];
+                }
+
+                if (area) {
+                    zone.splice(0, 0, province, city);
+                } else if (this.$store.state.user.city) {
+                    zone.splice(0, 0, province, city);                    
+                } else if (province && province != '中国') {
+                    zone.splice(0, 0, province);
+                }
+                return zone;
+            },
             _modifyUser () {
+                const zone = this.checkZone();
                 this.$http.post(this.$url.MODIFY_USER, {
                     id: this.formItem.userId || '',
                     userName: this.formItem.USERNAME,
                     realName: this.formItem.REALNAME,
-                    province: this.formItem.zone[0],
-                    city: this.formItem.zone[1],
-                    area: this.formItem.zone[2],
+                    province: zone[0],
+                    city: zone[1],
+                    area: zone[2],
                     gender: this.formItem.GENDER,
                     telephone: this.formItem.TELEPHONE,
-                    level: this.formItem.LEVEL,
+                    level: this.userLevel,
                     roleId: +this.formItem.roleId,
                 }).then((() => {
                     this.modifyModal = false;
@@ -317,15 +388,16 @@
                 }).bind(this));
             },
             _addUser () {
+                const zone = this.checkZone();
                 this.$http.post(this.$url.CREATE_USER, {
                     userName: this.formItem.USERNAME,
                     realName: this.formItem.REALNAME,
-                    province: this.formItem.zone[0],
-                    city: this.formItem.zone[1],
-                    area: this.formItem.zone[2],
+                    province: zone[0],
+                    city: zone[1],
+                    area: zone[2],
                     gender: this.formItem.GENDER,
                     telephone: this.formItem.TELEPHONE,
-                    level: this.formItem.LEVEL,
+                    level: this.userLevel,
                     roleId: +this.formItem.roleId,
                 }).then((() => {
                     this.modifyModal = false;

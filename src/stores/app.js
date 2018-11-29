@@ -1,8 +1,9 @@
 import axios from '../config/http';
 import urls from '@/config/urls';
-import provinceData from '@/libs/province';
+import provinceData from '@/libs/provinceData';
+import Cookies from 'js-cookie';
 
-let loginUser = localStorage.getItem('loginUser');
+let loginUser = Cookies.get('loginUser');
 try {
     loginUser = JSON.parse(loginUser) || {};
 } catch(e) {
@@ -24,32 +25,34 @@ const getters = {
         const city = state.user.city;
         const area = state.user.area;
 
-        let data = provinceData.filter(d => {
+        let data = provinceData.children.filter(d => {
             if (!province || province === '中国') {
                 return true;
             }
-            return province.includes(d.value);
+            return province.includes(d.label);
         }).map(d => {
             const cities = (d.children || []).filter(c => {
                 if (!city) {
                     return true;
                 }
-                return city.includes(c.value);
+                return city.includes(c.label);
             }).map(c => {
                 const areas = (c.children || []).filter(a => {
                     if (!area) {
                         return true;
                     }
-                    return area.includes(a.value);
+                    return area.includes(a.label);
                 }).map(a => {
                     return {
-                        value: a.value,
+                        selectable: !area,
+                        value: a.label,
                         label: a.label,
                         parent_code: a.parent_code,
                     }
                 });
                 return {
-                    value: c.value,
+                    selectable: !area && !city,
+                    value: c.label,
                     label: c.label,
                     parent_code: c.parent_code,
                     children: areas,
@@ -57,12 +60,74 @@ const getters = {
             });
 
             return {
-                value: d.value,
+                selectable: (!province || province === '中国') && !city,
+                value: d.label,
                 label: d.label,
                 parent_code: d.parent_code,
                 children: cities,
             }
         });
+        return data;
+    }, 
+    userProvinceData: state => {
+        const province = state.user.province;
+        const city = state.user.city;
+        const area = state.user.area;
+
+        let _provinceData;
+        let _cityData;
+        let _areaData;
+
+        let data = _provinceData = provinceData.children.filter(d => {
+            if (!province || province === '中国') {
+                return true;
+            }
+            return province.includes(d.label);
+        }).map(d => {
+            const cities = _cityData = (d.children || []).filter(c => {
+                if (!city) {
+                    return true;
+                }
+                return city.includes(c.label);
+            }).map(c => {
+                const areas = _areaData = (c.children || []).filter(a => {
+                    if (!area) {
+                        return true;
+                    }
+                    return area.includes(a.label);
+                }).map(a => {
+                    return {
+                        selectable: !area,
+                        value: a.label,
+                        label: a.label,
+                        parent_code: a.parent_code,
+                    }
+                });
+                return {
+                    selectable: !area && !city,
+                    value: c.label,
+                    label: c.label,
+                    parent_code: c.parent_code,
+                    children: areas,
+                }
+            });
+
+            return {
+                selectable: (!province || province === '中国') && !city,
+                value: d.label,
+                label: d.label,
+                parent_code: d.parent_code,
+                children: cities,
+            }
+        });
+        
+        if (area || city) {
+            return _areaData;
+        } else if (province && province !== '中国') {
+            return _cityData;
+        } else {
+            return data;
+        }
         return data;
     }
 };
@@ -76,7 +141,7 @@ const mutations = {
     resetPasswd (state, flag) {
         (state.user || []).passwdResetted = flag;
         state.passwdResetted = flag;
-        localStorage.setItem('loginUser', JSON.stringify(state.user));
+        Cookies.set('loginUser', JSON.stringify(state.user));
     },
     setScreenSize (state, flag) {
         state.isFullScreen = flag;

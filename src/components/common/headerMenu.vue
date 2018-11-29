@@ -44,6 +44,8 @@
 </template>
 <script>
     import permission from '../../config/permission';
+    import Cookies from 'js-cookie';
+
     export default {
         data () {
             return {
@@ -63,11 +65,19 @@
                 const location = [];
                 const city = this.$store.state.user.city;
                 const area = this.$store.state.user.area;
+                const province = this.$store.state.user.province;
+                if (province) {
+                    location.push(province);
+                }
                 if (city) {
                     location.push(city);
                 }
                 if (area) {
                     location.push(area);
+                }
+
+                if (location.length === 3) {
+                    location.splice(0, 1);
                 }
                 return location.join('');
             },
@@ -108,7 +118,8 @@
             logout () {
                 this.user = {};
                 this.$store.commit('setUser', {});
-                localStorage.removeItem('loginUser');
+                // localStorage.removeItem('loginUser');
+                Cookies.remove('loginUser');
                 this.$router.push({
                     path: '/',
                 });

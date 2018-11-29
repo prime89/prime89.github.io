@@ -40,7 +40,7 @@ module.exports = merge(webpackBaseConfig, {
     devServer: {
         proxy: {
             '/auth-web': {
-              target: 'http://193.112.97.65:28080',
+              target: 'https://edms.gd95009.com/',
               //pathRewrite: {'^/auth': '/web-auth'},
               secure: false,
               onProxyRes: function(proxyRes, req, res) {

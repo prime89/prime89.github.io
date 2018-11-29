@@ -32,7 +32,11 @@ export default {
     REPORT_STATUS_DATA: '/report/elvStatusRatioByArea',
     REPORT_BAD_DATA: 'report/elvFaultRatioByMonth',
 
+    ws_base: 'wss://edms.gd95009.com/auth-web',
+
     ws_elevator_detail: '/event',
     ws_elevator_map: '/info',
+
+    IMPORT_DATA: '/elevatorInfo/addelevatorbycode',
 
 };

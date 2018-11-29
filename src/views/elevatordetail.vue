@@ -289,7 +289,7 @@
             fetch() {
                 const self = this;
                 //websocket更新
-                const ws = this.ws = new WebSocket('ws://193.112.97.65:28080/auth-web' + this.$url.ws_elevator_detail);
+                const ws = this.ws = new WebSocket(this.$url.ws_base + this.$url.ws_elevator_detail);
                 ws.onopen = function () {
                     // 使用 send() 方法发送数据
                     ws.send(JSON.stringify({
