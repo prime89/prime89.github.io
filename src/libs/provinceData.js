@@ -3,7 +3,8 @@ export default {
 	"level": "country",
 	"center": [116.3683244, 39.915085],
 	"label": "全国",
-	"children": [{
+	"children": [
+		{
 		"adcode": 110000,
 		"level": "province",
 		"center": [116.405285, 39.904989],

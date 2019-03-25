@@ -24,7 +24,9 @@ axios.interceptors.request.use((config) => {
 axios.interceptors.response.use(function (response) {
     // Do something with response data
     if (response.data.code != 0) {
-        if (response.data.msg) {
+        if (response.data.data && (response.data.data.message || response.data.data.msg)) {
+            iView.Message.error(response.data.data.message || response.data.data.msg );
+        } else if (response.data.msg) {
             iView.Message.error(response.data.msg);
         } else {
             iView.Message.error('服务不可用');

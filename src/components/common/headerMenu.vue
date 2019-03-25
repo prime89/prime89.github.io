@@ -120,9 +120,11 @@
                 this.$store.commit('setUser', {});
                 // localStorage.removeItem('loginUser');
                 Cookies.remove('loginUser');
-                this.$router.push({
-                    path: '/',
-                });
+                // this.$router.push({
+                //     path: '/',
+                // });
+                window.location.href="/";
+
             }
         },
     }

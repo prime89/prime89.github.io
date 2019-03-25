@@ -15,17 +15,20 @@
                 <Col span="3">
                最近事件
                </Col>
-                <Col span="3">
+                <Col span="2">
                事件级别
                </Col>
-                <Col span="3">
+                <Col span="2">
                是否故障
                </Col>
                 <Col span="3">
                发生时间
                </Col>
-                <Col span="3">
+                <Col span="2">
                当前楼层
+               </Col>
+               <Col span="3">
+               操作
                </Col>
                 <Col span="6">
                运行状态
@@ -38,12 +41,12 @@
                 <Col span="3" class="col">
                {{eventName}}
                </Col>
-                <Col span="3" class="col">
+                <Col span="2" class="col">
                {{
                    formatEventLevel(eventLevel)
                }}
                </Col>
-                <Col span="3" class="col">
+                <Col span="2" class="col">
                {{
                    eventLevel==3?'是':'否'
                }}
@@ -51,8 +54,11 @@
                 <Col span="3" class="col">
                {{eventTime}}
                </Col>
-                <Col span="3" class="col">
+                <Col span="2" class="col">
                {{this.runningState.curFloor}}
+               </Col>
+               <Col span="3" class="col">
+               <a href="javascript:void(0)" @click="openCloseModal">清除异常</a>
                </Col>
                 <Col span="6" class="col">
                     <Tooltip :content="runningTips">
@@ -131,6 +137,29 @@
             <div class="map" id="detailmap"></div>
        </div>
        </div>
+
+       <Modal
+            width="600"
+            v-model="modal"
+            title="清除事件">
+
+            <Form ref="formItem" :model="formItem" :label-width="100" :rules="ruleValidate">
+                <FormItem label="电梯注册码" prop="closeReason">
+                    <span>{{registerCode}}</span>
+                </FormItem>
+                <FormItem label="电梯地址" prop="closeReason">
+                    <span>{{elvAddress}}</span>                    
+                </FormItem>
+                <FormItem label="关闭原因" prop="closeReason">
+                    <Input type="textarea" size="large" v-model="formItem.closeReason" placeholder="关闭原因" style="width: 300px" />
+                </FormItem>
+            </Form>
+
+            <div slot="footer">
+                <Button type="text" size="large" @click="cancel">取消</Button>
+                <Button type="primary" size="large" @click="closeAllEvents">确定</Button>
+            </div>
+        </Modal>
     </HeaderMenu>
 </template>
 <script>
@@ -174,6 +203,15 @@
                 eventTime: "",
                 eventStatus: "",
                 deviceSnCode: "",
+                formItem: {
+                    closeReason: '',
+                },
+                ruleValidate: {
+                    closeReason: [
+                        { required: true, message: '请输入关闭原因', trigger: 'blur' }
+                    ]
+                },
+                modal: false,
             };
         },
         mounted() {
@@ -317,9 +355,30 @@
                 ws.onclose = function () {
                 };
             },
-            updateStatus(data) {console.log(data);
+            updateStatus(data) {
                 this.runningState = data;
-            }
+            },
+            openCloseModal(data) {
+                this.modal = true;
+                this.$refs.formItem.resetFields();
+            },
+            closeAllEvents () {
+                this.$refs.formItem.validate(valid => {
+                    if (!valid) {
+                        return;
+                    }
+
+                    this.$http.post(this.$url.CLOSE_ALLEVENTS, Object.assign({
+                        registerCode: this.registerCode,
+                        userId: this.$store.state.user.id,
+                    }, this.formItem)).then((data) => {
+                        this.modal = false;
+                        this.$Message.success('关闭成功');
+                        this.goPage(this.page);//刷新当前页
+                    });
+                });
+                
+            },
         }
         
     }

@@ -139,10 +139,12 @@
                     id: data.userId,
                     username: data.userName,
                     role: data.sys_role_name,
+                    sys_role_id: data.sys_role_id,
                     passwdResetted: data.pdstatus != 0,
                     province: data.province || '',
                     city: data.city || '',
                     area: data.area || '',
+                    level: data.level || '',
                 };
                 this.$store.commit('setUser', userinfo);
                 Cookies.set('loginUser', JSON.stringify(userinfo));

@@ -26,8 +26,12 @@ const routers = [
         },
     },
     {
+        name: 'overview',
         path: '/overview',
         component: overview,
+        meta: {
+            keepAlive: true,
+        }
     }, {
         path: '/elevators',
         component: elevators,

@@ -273,13 +273,17 @@
                     return this.stations[a];
                 });
 
-                this.$http.post(this.$url.DEV_BIND, Object.assign({
-                    userId: this.$store.state.user.id,
-                    stations: arr,
-                }, this.formItem)).then((data) => {
-                    this.$Message.success('绑定成功');
-                    this.goPage(1);
-                    this.cancel();
+                this.$refs['formItem'].validate((valid) => {
+                    if (valid) {
+                        this.$http.post(this.$url.DEV_BIND, Object.assign({
+                            userId: this.$store.state.user.id,
+                            stations: arr,
+                        }, this.formItem)).then((data) => {
+                            this.$Message.success('绑定成功');
+                            this.goPage(1);
+                            this.cancel();
+                        });
+                    }
                 });
             },
             remove () {

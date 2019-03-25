@@ -26,6 +26,7 @@ export default {
     //incidents
     INCIDENTLIST: '/eventInfo/queryEventList',
     CLOSE_INCIDENT: '/eventInfo/closeEvent',
+    CLOSE_ALLEVENTS: '/eventInfo/closeAllEvents',
 
     //report
     REPORT_BRAND_DATA: '/report/brandRatio',

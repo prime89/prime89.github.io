@@ -381,6 +381,7 @@
                     telephone: this.formItem.TELEPHONE,
                     level: this.userLevel,
                     roleId: +this.formItem.roleId,
+                    operatorId: this.$store.state.user.id,
                 }).then((() => {
                     this.modifyModal = false;
                     this.goPage(1);
@@ -399,6 +400,7 @@
                     telephone: this.formItem.TELEPHONE,
                     level: this.userLevel,
                     roleId: +this.formItem.roleId,
+                    operatorId: this.$store.state.user.id,
                 }).then((() => {
                     this.modifyModal = false;
                     this.goPage(1);

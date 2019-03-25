@@ -171,9 +171,9 @@
                 }
             },
             isAdmin() {
-                const role = this.$store.state.role; 
+                const user = this.$store.state.user; 
 
-                return role === 'admin' || role === 'region_admin'; 
+                return user.sys_role_id <= 2 && user.level <= 1;
             },
         },
         methods: {
@@ -197,7 +197,7 @@
             initWs() {
                 const self = this;
                 //websocket更新
-                let ws = this.ws = new WebSocket('wss://edms.gd95009.com/auth-web' + this.$url.ws_elevator_detail);
+                let ws = this.ws = new WebSocket(this.$url.ws_base + this.$url.ws_elevator_detail);
                 ws.onopen = function () {}
                 // 使用 send() 方法发送数据
                 

@@ -133,7 +133,7 @@
                     resizeEnable: true,
                     zoom: 10,  //设置地图显示的缩放级别
                     //center: [116.397428, 39.90923],//设置地图中心点坐标
-                    mapStyle: 'amap://styles/grey',  //设置地图的显示样式
+                    mapStyle: 'amap://styles/dark',  //设置地图的显示样式
                     viewMode: '2D',  //设置地图模式
                     lang:'zh_cn',  //设置地图语言类型
                 });
@@ -186,21 +186,34 @@
                 function setLayer(zone) {
                     amap.setCenter(zone.center);
 
+                    var outer = [
+                        new AMap.LngLat(-360,90,true),
+                        new AMap.LngLat(-360,-90,true),
+                        new AMap.LngLat(360,-90,true),
+                        new AMap.LngLat(360,90,true),
+                    ];
+                    var pathArray = [
+                        outer
+                    ];
+                    
+
                     var bounds = zone.boundaries;
+
+                    pathArray.push.apply(pathArray,bounds)
                     if (bounds) {
-                        for (var i = 0, l = bounds.length; i < l; i++) {
-                            var polygon = new AMap.Polygon({
-                                map: amap,
-                                strokeWeight: 1,
-                                strokeColor: '#0091ea',
-                                fillColor: '#eee',
-                                fillOpacity: 0.1,
-                                path: bounds[i]
-                            });
-                            
-                        }
-                        amap.setFitView();//地图自适应
+                        var polygon = new AMap.Polygon({
+                            map: amap,
+                            strokeWeight: 1,
+                            strokeColor: '#3b5565',
+                            fillColor: '#000000',
+                            fillOpacity: 0.8,
+                            pathL: pathArray
+                        });
+                        polygon.setPath(pathArray);
+                        amap.add(polygon)
+                        //amap.setFitView();//地图自适应
                     }
+                    
 
                     const map = Loca.create(amap);
 
@@ -233,9 +246,11 @@
 
                                 if (eventLevel == 3) {
                                     return 'red';
+                                } else if (eventLevel == 2) {
+                                    return '#fe936b'
                                 }
                                 if (onlineState == 0) {
-                                    return 'gray';
+                                    return '#ececec';
                                 }
                                 return '#3ecb9f';
                             },
@@ -245,9 +260,9 @@
                         },
                         // 样式改变条件为 mouseenter 及 mouseleave，没有设置的属性会继承 style 中的配置
                         selectStyle: {
-                            radius: 12,
+                            radius: 6,
                             fill: '#ffe30a',
-                            lineWidth: 2,
+                            lineWidth: 1,
                             stroke: '#ffffff',
                             opacity: 0.9,
                         }
@@ -258,6 +273,8 @@
                         let state = '在线';
                         if (rawData.eventLevel == 3) {
                             state = '故障';
+                        } else if (rawData.eventLevel == 2) {
+                            state = '异常';
                         } else if (rawData.onlineState == 0) {
                             state = '离线';
                         }
@@ -267,8 +284,14 @@
                             '<b>状态：</b>' + state,
                             ].join('<br>'));
                         infoWindow.open(amap, rawData.center.split(','));
-                        
+
+
+                        layer.off('mouseleave').on('mouseleave', () => {
+                            self.closeWindow();
+                        })
                     });
+
+                    
 
 
                     layer.on('click', function(ev) {
