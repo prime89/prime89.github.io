@@ -17,6 +17,12 @@
 html, body {
     height: 100%;
 }
+.amap-ui-pointsimplifier-container .overlay-title.left:before{
+    top: 30px !important;
+}
+.amap-ui-pointsimplifier-container .overlay-title.left:after{
+    top: 30px !important;
+}
 .ivu-layout {
     height: 100%;
     background: #fff;

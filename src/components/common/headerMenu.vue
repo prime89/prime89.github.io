@@ -5,7 +5,7 @@
                 <Menu mode="horizontal" theme="dark" :active-name="activeMenu"  @on-select="handleItemSelected">
                     <div class="layout-logo">
                         <img src="../../images/u96.png" alt="" width="40px" height="40px">
-                        <span>电梯动态监测系统</span>
+                        <span>电梯智能AI（预警）管理系统</span>
 
                         <span class="location">（{{location || '全国'}}）</span>
                     </div>

@@ -21,9 +21,9 @@
         </div>
 
         <div class="operation" v-show="!searchBarOpened">
-            <Tooltip content="搜索">
+            <!-- <Tooltip content="搜索">
                 <Icon type="ios-search" class="btn" @click="searchBarOpened=true"></Icon>
-            </Tooltip>
+            </Tooltip> -->
         
             <Tooltip content="全屏" v-show="!isFullScreen">
                 <Icon type="md-expand" class="btn" @click="fullScreen"></Icon>
@@ -65,6 +65,13 @@
     const mutations = mapMutations(['fullScreen', 'shrink']);
 
     const statusMap = ['', '一般', '异常', '故障'];
+
+    const colors = [
+        '#888888',
+        '#90e36f',
+        '#ff9e00',
+        '#ff1800'
+    ];
     export default {
         data () {
             return {
@@ -90,6 +97,7 @@
                 },
                 isSearching: false,
                 searchBarOpened: false,
+                pointSimplifierIns: null,
                 types: {
                     all: {
                         key: 'all',
@@ -122,7 +130,7 @@
                     this.newData = false;
                     this.rerenderMap(); 
                 } 
-            }, 800);
+            }, 500);
         },
         methods: {
             fullScreen: mutations.fullScreen,
@@ -133,7 +141,7 @@
                     resizeEnable: true,
                     zoom: 10,  //设置地图显示的缩放级别
                     //center: [116.397428, 39.90923],//设置地图中心点坐标
-                    mapStyle: 'amap://styles/dark',  //设置地图的显示样式
+                    mapStyle: 'amap://styles/darkblue',  //设置地图的显示样式
                     viewMode: '2D',  //设置地图模式
                     lang:'zh_cn',  //设置地图语言类型
                 });
@@ -183,126 +191,226 @@
                     });
                 }
 
+                let polygons = [];
                 function setLayer(zone) {
-                    amap.setCenter(zone.center);
-
-                    var outer = [
-                        new AMap.LngLat(-360,90,true),
-                        new AMap.LngLat(-360,-90,true),
-                        new AMap.LngLat(360,-90,true),
-                        new AMap.LngLat(360,90,true),
-                    ];
-                    var pathArray = [
-                        outer
-                    ];
-                    
-
+                    amap.remove(polygons)//清除上次结果
+                    polygons = [];
                     var bounds = zone.boundaries;
-
-                    pathArray.push.apply(pathArray,bounds)
                     if (bounds) {
-                        var polygon = new AMap.Polygon({
-                            map: amap,
-                            strokeWeight: 1,
-                            strokeColor: '#3b5565',
-                            fillColor: '#000000',
-                            fillOpacity: 0.8,
-                            pathL: pathArray
-                        });
-                        polygon.setPath(pathArray);
-                        amap.add(polygon)
-                        //amap.setFitView();//地图自适应
+                        for (var i = 0, l = bounds.length; i < l; i++) {
+                            //生成行政区划polygon
+                            var polygon = new AMap.Polygon({
+                                strokeWeight: 1,
+                                path: bounds[i],
+                                fillOpacity: 0.4,
+                                fillColor: '#80d8ff',
+                                strokeColor: '#0091ea',
+                                bubble: true,
+                            });
+                            polygons.push(polygon);
+                        }
                     }
-                    
+                    amap.add(polygons);
+                    amap.setFitView(polygons);//视口自适应
 
-                    const map = Loca.create(amap);
 
-                    const layer = self.layer = Loca.visualLayer({
-                        eventSupport: true,
-                        container: map,
-                        // 指定数据类型
-                        type: 'point',
-                        // 展示形状
-                        shape: 'circle'
-                    });
+                    AMapUI.load(['ui/misc/PointSimplifier', 'lib/$'], function(PointSimplifier, $) {
 
-                    // layer.setData([{
-                    //     name: '北京市',
-                    //     center: '114.088616,22.551412'
-                    // }], {
-                    //     lnglat: 'center'
-                    // }); 
-                    layer.setData([], {
-                        lnglat: 'center'
-                    });
+                        if (!PointSimplifier.supportCanvas) {
+                            self.$Message.warning('当前环境不支持 Canvas！');
+                            return;
+                        }
 
-                    layer.setOptions({
-                        style: {
-                            radius: 6,
-                            //fill: '#4fc2ff',
-                            fill: function(res) {
-                                const eventLevel = res.value.eventLevel;
-                                const onlineState = res.value.onlineState;
+                        self.pointSimplifierIns = new PointSimplifier({
+                            zIndex: 99999,
+                            autoSetFitView: false,
+                            map: amap, //所属的地图实例
 
-                                if (eventLevel == 3) {
-                                    return 'red';
-                                } else if (eventLevel == 2) {
-                                    return '#fe936b'
+                            getPosition: function(item) {
+                                if (!item) {
+                                    return null;
                                 }
-                                if (onlineState == 0) {
-                                    return '#ececec';
-                                }
-                                return '#3ecb9f';
+                                return [item.longitude, item.latitude];
                             },
-                            lineWidth: 1,
-                            stroke3: '#eeeeee',
-                            opacity: 0.8
-                        },
-                        // 样式改变条件为 mouseenter 及 mouseleave，没有设置的属性会继承 style 中的配置
-                        selectStyle: {
-                            radius: 6,
-                            fill: '#ffe30a',
-                            lineWidth: 1,
-                            stroke: '#ffffff',
-                            opacity: 0.9,
-                        }
-                    });
+                            compareDataItem: function (item1, item2, index1, index2) {
+                                //事件级别高的优先显示
+                                return item1.eventLevel > item2.eventLevel ? -1:1;
+                            },
+                            getHoverTitle: function(dataItem, idx) {
+                                const rawData = dataItem;
+                                let state = '在线';
+                                if (!+rawData.onlineState || !+rawData.eventLevel) {
+                                    state = '离线';
+                                } else if (rawData.eventLevel == 3) {
+                                    state = '故障';
+                                } else if (rawData.eventLevel == 2) {
+                                    state = '异常';
+                                }
+                                return "<b>注册码：</b>" + dataItem.registerCode + "<br><b>地址：</b>" + dataItem.address + '<br><b>状态：</b>' + state;
+                            },
+                            //使用GroupStyleRender
+                            renderConstructor: PointSimplifier.Render.Canvas.GroupStyleRender,
+                            renderOptions: {
+                                //点的样式
+                                pointStyle: {
+                                    fillStyle: '#888888',
+                                    width: 5,
+                                    height: 5
+                                },
+                                getGroupId: function(item, idx) {
+                                    //根据电梯状态（eventLevel）显示不同样式
+                                    if( !+item.eventLevel || !+item.onlineState) {
+                                        return 0;
+                                    }
+                                    return +item.eventLevel;
+                                },
+                                groupStyleOptions: function(gid) {
+                                    var size = 8;
+                                    return {
+                                        pointStyle: {
+                                            //content: gid % 2 ? 'circle' : 'rect',
+                                            fillStyle: colors[gid % colors.length],
+                                            width: size,
+                                            height: size
+                                        },
+                                        pointHardcoreStyle: {
+                                            width: size - 2,
+                                            height: size - 2
+                                        }
+                                    };
+                                }
+                            }
+                        });
 
-                    layer.on('mouseenter', (e) => {
-                        const rawData = e.rawData;
-                        let state = '在线';
-                        if (rawData.eventLevel == 3) {
-                            state = '故障';
-                        } else if (rawData.eventLevel == 2) {
-                            state = '异常';
-                        } else if (rawData.onlineState == 0) {
-                            state = '离线';
-                        }
-                        infoWindow.setContent([
-                            '<b>电梯注册码：</b>' + rawData.registerCode,
-                            '<b>安装地址：</b>' + rawData.address,
-                            '<b>状态：</b>' + state,
-                            ].join('<br>'));
-                        infoWindow.open(amap, rawData.center.split(','));
-
-
-                        layer.off('mouseleave').on('mouseleave', () => {
-                            self.closeWindow();
+                        self.pointSimplifierIns.on('pointClick', function(e, record) {
+                            self.viewDetail(record.data)
                         })
+
+                        self.initWs();
                     });
+
+                }
+
+                // function setLayer(zone) {
+                //     amap.setCenter(zone.center);
+
+                //     var outer = [
+                //         new AMap.LngLat(-360,90,true),
+                //         new AMap.LngLat(-360,-90,true),
+                //         new AMap.LngLat(360,-90,true),
+                //         new AMap.LngLat(360,90,true),
+                //     ];
+                //     var pathArray = [
+                //         //outer
+                //     ];
+                    
+
+                //     var bounds = zone.boundaries;
+
+                //     pathArray.push.apply(pathArray,bounds)
+                //     if (bounds) {
+                //         var polygon = new AMap.Polygon({
+                //             map: amap,
+                //             strokeWeight: 1,
+                //             strokeColor: '#3b5565',
+                //             fillColor: '#ffffff',
+                //             fillOpacity: 0.8,
+                //             pathL: pathArray
+                //         });
+                //         polygon.setPath(pathArray);
+                //         amap.add(polygon)
+                //         //amap.setFitView();//地图自适应
+                //     }
+                    
+
+                //     const map = Loca.create(amap);
+
+                //     const layer = self.layer = Loca.visualLayer({
+                //         eventSupport: true,
+                //         container: map,
+                //         // 指定数据类型
+                //         type: 'point',
+                //         // 展示形状
+                //         shape: 'circle'
+                //     });
+
+                //     // layer.setData([{
+                //     //     name: '北京市',
+                //     //     center: '114.088616,22.551412'
+                //     // }], {
+                //     //     lnglat: 'center'
+                //     // }); 
+                //     layer.setData([], {
+                //         lnglat: 'center'
+                //     });
+
+                //     layer.setOptions({
+                //         style: {
+                //             radius: 6,
+                //             //fill: '#4fc2ff',
+                //             fill: function(res) {
+                //                 const eventLevel = res.value.eventLevel;
+                //                 const onlineState = res.value.onlineState;
+
+                //                 if (eventLevel == 3) {
+                //                     return '#ff1800';
+                //                 } else if (eventLevel == 2) {
+                //                     return '#ff9e00'
+                //                 }
+                //                 if (onlineState == 0) {
+                //                     return '#888888';
+                //                 }
+                //                 return '#90e36f';
+                //             },
+                //             lineWidth: 1,
+                //             stroke3: '#eeeeee',
+                //             opacity: 0.8
+                //         },
+                //         // 样式改变条件为 mouseenter 及 mouseleave，没有设置的属性会继承 style 中的配置
+                //         selectStyle: {
+                //             radius: 6,
+                //             fill: '#ffe30a',
+                //             lineWidth: 1,
+                //             stroke: '#ffffff',
+                //             opacity: 0.9,
+                //         }
+                //     });
+
+                //     layer.on('mouseenter', (e) => {
+                //         const rawData = e.rawData;
+                //         let state = '在线';
+                //         if (rawData.eventLevel == 3) {
+                //             state = '故障';
+                //         } else if (rawData.eventLevel == 2) {
+                //             state = '异常';
+                //         } else if (rawData.onlineState == 0) {
+                //             state = '离线';
+                //         }
+                //         infoWindow.setContent([
+                //             '<b>电梯注册码：</b>' + rawData.registerCode,
+                //             '<b>安装地址：</b>' + rawData.address,
+                //             '<b>状态：</b>' + state,
+                //             ].join('<br>'));
+                //         infoWindow.open(amap, rawData.center.split(','));
+
+
+                //         layer.off('mouseleave').on('mouseleave', () => {
+                //             self.closeWindow();
+                //         })
+                //     });
 
                     
 
 
-                    layer.on('click', function(ev) {
-                        var rawData = ev.rawData;
-                        self.viewDetail(rawData);
-                    });
+                //     layer.on('click', function(ev) {
+                //         var rawData = ev.rawData;
+                //         self.viewDetail(rawData);
+                //     });
 
-                    layer.render();
+                //     layer.render();
 
-                    self.initWs();
-                }
+                //     self.initWs();
+                // }
             },
             closeWindow() {
                 this.infoWindow && this.infoWindow.close();
@@ -374,12 +482,12 @@
             },
             updateList(data) {
                 (data || []).forEach(d => {
-                    const existMarker = (this.elevatorData[d.registerCode] || {}).marker;
-                    const m = new AMap.Marker({
-                        position: new AMap.LngLat((+d.longitude).toFixed(6), (+d.latitude).toFixed(6)),
-                        content: '<div style="background-color: hsla(180, 100%, 50%, 0.7); height: 24px; width: 24px; border: 1px solid hsl(180, 100%, 40%); border-radius: 12px; box-shadow: hsl(180, 100%, 50%) 0px 0px 1px;"></div>',
-                        offset: new AMap.Pixel(-15, -15)
-                    });
+                    // const existMarker = (this.elevatorData[d.registerCode] || {}).marker;
+                    // const m = new AMap.Marker({
+                    //     position: new AMap.LngLat((+d.longitude).toFixed(6), (+d.latitude).toFixed(6)),
+                    //     content: '<div style="background-color: hsla(180, 100%, 50%, 0.7); height: 24px; width: 24px; border: 1px solid hsl(180, 100%, 40%); border-radius: 12px; box-shadow: hsl(180, 100%, 50%) 0px 0px 1px;"></div>',
+                    //     offset: new AMap.Pixel(-15, -15)
+                    // });
                     this.elevatorData[d.registerCode] = {
                         center: `${(+d.longitude).toFixed(6)},${(+d.latitude).toFixed(6)}`,
                         longitude: (+d.longitude).toFixed(6),
@@ -397,17 +505,16 @@
                 });
             },
             rerenderMap () {console.log('rendermap');
-                this.layer.setData(this.filterData(), {
-                    lnglat: 'center'
-                });
-                this.layer.render();
+                //this.pointSimplifierIns.off('pointClick', this.pointClick.bind(this))
+                const self = this;
+                this.pointSimplifierIns.setData(this.filterData());
             },
             handleReset() {
                 this.$refs.formInline.resetFields();
                 this.handleSearch();
             },
             handleSearch() {
-                if (!this.layer) {
+                if (!this.pointSimplifierIns) {
                     return;
                 }
                 this.rerenderMap();
@@ -430,13 +537,13 @@
                     else if (registerCode && !(d.registerCode || '').includes(registerCode)) {
                         flag = false;
                     }
-                    else if (currentState == 'accident' && d.eventLevel != 3) {
+                    else if (currentState == 'accident' && (+d.eventLevel != 3 || !+d.onlineState)) {
                         flag = false;
                     }
-                    else if ((currentState == 'online') && d.onlineState != 1) {
+                    else if ((currentState == 'online') && (!+d.onlineState || !+d.eventLevel)) {
                         flag = false;
                     }
-                    else if ((currentState == 'offline') && d.onlineState != 0) {
+                    else if ((currentState == 'offline') && (!!(+d.onlineState))) {
                         flag = false;
                     }
                     return flag;

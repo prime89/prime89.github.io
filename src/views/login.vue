@@ -2,7 +2,7 @@
 <div class="login-frame"  :style="panelStyle">
     <div class="login-panel">
             <Form :model="formItem" :label-width="80" ref="loginForm" :rules="ruleValidation">
-                <div class="login-title"><span>电梯动态监测系统</span></div>
+                <div class="login-title"><span>电梯智能AI（预警）管理系统</span></div>
                 <FormItem prop="userName">
                     <Input size="large" v-model="formItem.userName" prefix="ios-person" placeholder="用户名" style="width: 400px" />
                 </FormItem>

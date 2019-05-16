@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DIR=project
-
+rm -rf dist
 npm run build
 
 wait
