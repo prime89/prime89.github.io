@@ -78,7 +78,7 @@
           <RadioGroup v-model="formItem.shipWay">
             <Radio label="送货">送货</Radio>
             <Radio label="快递">快递</Radio>
-            <Radio label="无料">物流</Radio>
+            <Radio label="物流">物流</Radio>
             <Radio label="自提">自提</Radio>
           </RadioGroup>
         </FormItem>
