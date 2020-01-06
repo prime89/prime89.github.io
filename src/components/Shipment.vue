@@ -8,46 +8,52 @@
           <i-input v-model="formItem.name" placeholder="请输入客户名称地址"></i-input>
         </FormItem>
         <div class="asset">
-          <div class="title">
-            <div class="left">货物清单</div>
-            <div class="right">
-              <i-col span="5">
-                <div class="label">品名</div>
-              </i-col>
-              <i-col span="5" offset="1">
-                <div class="label">数量</div>
-              </i-col>
-              <i-col span="5" offset="1">
-                <div class="label">单价</div>
-              </i-col>
-              <i-col span="4" offset="1">
-                <div class="label">操作</div>
-              </i-col>
-            </div>
+          <div class="title">货物清单</div>
+          <div class="head">
+            <i-col span="5">
+              <div class="label">品名</div>
+            </i-col>
+            <i-col span="9">
+              <div class="label" style="margin-left:10px;">数量</div>
+            </i-col>
+            <i-col span="6">
+              <div class="label" style="margin-left:10px;">单价</div>
+            </i-col>
+            <i-col span="4">
+              <div class="label" style="margin-left:10px;text-align:center;">操作</div>
+            </i-col>
           </div>
           <FormItem
                   v-for="(item, index) in formItem.items"
                   :key="index"
-                  :label="'货物 ' + (index + 1)"
+                  :label-width="0"
                   :prop="'items.' + index + '.value'"
                   >
             <Row>
               <i-col span="5">
-                <i-input type="text" v-model="item.name" placeholder="输入品种..."></i-input>
+                <i-input type="text" v-model="item.name" placeholder="品种..."></i-input>
               </i-col>
-              <i-col span="5" offset="1">
-                <i-input type="text" v-model="item.count" placeholder="输入数量..."></i-input>
+              <i-col span="9">
+                <i-input type="text" v-model="item.count" style="padding-left:10px;" placeholder="数量...">
+                  <Select v-model="item.unit" slot="append" style="width:60px;">
+                    <Option v-for="item in unitList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+                  </Select>
+                </i-input>
               </i-col>
-              <i-col span="5" offset="1">
-                <i-input type="text" v-model="item.price" placeholder="输入单价..."></i-input>
+              <i-col span="6">
+                <i-input type="text" v-model="item.price" placeholder="单价..." style="padding-left:10px;">
+                  <span slot="append">元</span> 
+                </i-input>
               </i-col>
-              <i-col span="4" offset="1">
-                <Button @click="handleRemove(index)">删除</Button>
+              <i-col span="4" offset="">
+                <Button @click="handleRemove(index)" icon="ios-trash-outline" type="text" style="margin-left: 10px;"></Button>
               </i-col>
             </Row>
           </FormItem>
 
-          <FormItem>
+          <FormItem
+            :label-width="0"
+          >
             <Row>
               <i-col span="12">
                 <Button type="dashed" long @click="handleAdd" icon="md-add">新增</Button>
@@ -136,29 +142,29 @@
         <FormItem label="时间：">
           {{date | date('yyyy.MM.dd')}}
         </FormItem>
-        <div class="asset noborder">
-          <div class="title">
-            <div class="left">出货数量及价格：</div>
-          </div>
+        <FormItem label="出货数量及价格："></FormItem>
+        <div style="padding: 20px;border: 1px dotted #2e8cf0;">
+          <div v-if="filteredItems.length === 0" style="color: #aaa;">暂无出货</div>
           <FormItem
-                  v-for="(item, index) in formItem.items"
-                  :key="index"
-                  :prop="'items.' + index + '.value'"
-                  >
+                v-for="(item, index) in filteredItems"
+                :key="index"
+                :label-width="20"
+                :prop="'items.' + index + '.value'"
+                >
             <Row>
               <i-col span="5">
                 {{item.name}}
               </i-col>
               <i-col span="5" offset="1">
-                {{item.count}}
+                {{item.count}}{{item.unit}}
               </i-col>
               <i-col span="5" offset="1">
-                {{item.price}}
+                {{item.price}}元/{{item.unit}}
               </i-col>
             </Row>
           </FormItem>
-
         </div>
+
 
         <FormItem label="背标要求：">
           {{formItem.backLabel}}
@@ -273,7 +279,7 @@ ${assets}
 出货单：${this.formItem.bill}
 出货方式：${this.formItem.shipWay}
 出货地点：${this.formItem.address}
-总金额：${this.formItem.amount}元
+总金额：${this.amount}元
 结款方式：${this.formItem.payment}
 价格序号：${this.formItem.seq}
 现金收款人：${this.formItem.reciever}
@@ -283,14 +289,30 @@ ${assets}
 备注：${this.formItem.remark}`;
       return text;
     },
+    filteredItems() {
+      return this.formItem.items.filter(v => v.name && v.price && v.count);
+    },
   },
   data() {
     return {
-      name: '',
+      unitList: [{
+        value: '个',
+        label: '个',
+      }, {
+        value: '箱',
+        label: '箱',
+      }, {
+        value: '支',
+        label: '支',
+      }, {
+        value: '件',
+        label: '件',
+      }],
       date: Date.now(),
       submitted: false,
       index: 1,
       formItem: {
+        name: '',
         items: [{
           value: '',
           index: 1,
@@ -298,6 +320,7 @@ ${assets}
           name: '',
           count: '',
           price: '',
+          unit: '个',
         }],
         backLabel: '要',
         bill: '要',
@@ -322,17 +345,46 @@ ${assets}
       this.submitted = true;
 
       copyTextToClipboard(this.result);
+      this.$Message.success('内容已复制到粘贴板')
     },
     handleAdd () {
       this.index++;
       this.formItem.items.push({
         value: '',
         index: this.index,
-        status: 1
+        status: 1,
+        name: '',
+        unit: '个',
+        price: '',
+        count: '',
       });
+      
     },
     handleRemove (index) {
       this.formItem.items.splice(index, 1)
+    },
+    handleReset(name) {
+      this.formItem.name = '';
+      this.formItem.items = [{
+        value: '',
+        index: 1,
+        status: 1,
+        name: '',
+        count: '',
+        price: '',
+        unit: '个',
+      }];
+      this.formItem.backLabel = '要';
+      this.formItem.bill = '要';
+      this.formItem.shipWay = '送货';
+      this.formItem.address = '仓库';
+      this.formItem.amount = 0;
+      this.formItem.payment = '现金';
+      this.formItem.seq = '1';
+      this.formItem.remark = '';
+      this.formItem.staff = '';
+      this.formItem.reciever = '';
+      this.$refs[name].resetFields();
     }
   },
 }
@@ -346,15 +398,16 @@ h3 {
 }
 
 .form{
-  margin: 10px;
+  padding: 10px;
 }
 
 .output{
-  margin: 10px;
+  padding: 10px;
 }
 
 .asset{
   margin: 10px 0;
+  padding: 10px;
   border: 1px dotted #2e8cf0;
 }
 
@@ -365,16 +418,14 @@ h3 {
 .ivu-form-item{
   margin-bottom: 6px;
 }
-.title .left{
-  text-align: right;
-  display: inline-block;
+.title{
   width: 80px;
-  vertical-align: middle;
-  padding: 10px 12px;
-  /* line-height: 1; */
+  text-align: right;
+  padding-right: 12px;
+  margin-bottom: 10px;
 }
 .output .left{
-  width: 140px;
+  width: 120px;
 }
 .title .right{
   vertical-align: middle;
@@ -389,6 +440,7 @@ h3 {
 .title .right .label{
   /* line-height: 1; */
   padding: 10px 0;
+  margin-left: 10px;
 }
 
 
